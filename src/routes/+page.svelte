@@ -13,7 +13,7 @@
   function submitName(e: SubmitEvent) {
     e.preventDefault();
     const n = name.trim().toLowerCase();
-    if (n === "amera" || n === "zahra") {
+    if (n === "amera" || n === "zahra" || n === "amera zahra" || n === "amera zahra binti mohd azwan") {
       stage = "question";
       error = "";
     } else {
