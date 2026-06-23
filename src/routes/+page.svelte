@@ -158,7 +158,7 @@
 </script>
 
 <svelte:head>
-  <title>For Amera ♡</title>
+  <title>My Lily ♡</title>
   <meta name="description" content="A little something made with love." />
 </svelte:head>
 
