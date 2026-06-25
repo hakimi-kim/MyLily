@@ -481,13 +481,6 @@
         >
           Edit
         </button>
-        <button
-          onclick={() => (viewing = null)}
-          class="px-4 py-2.5 rounded-xl text-[oklch(0.45_0.05_30)] hover:bg-[oklch(0.95_0.02_60)] cursor-pointer"
-        >
-          Close
-        </button>
-        
         <form method="POST" action="?/remove" use:enhance={() => { 
             return async ({ update }) => { 
               await update(); // Added update() here to refresh automatically
@@ -502,6 +495,13 @@
             Remove
           </button>
         </form>
+        <button
+          onclick={() => (viewing = null)}
+          class="px-4 py-2.5 rounded-xl text-[oklch(0.45_0.05_30)] hover:bg-[oklch(0.95_0.02_60)] cursor-pointer"
+        >
+          Close
+        </button>
+        
       </div>
     </div>
   </div>
