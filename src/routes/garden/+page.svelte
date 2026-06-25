@@ -229,7 +229,7 @@
 
     ctx.font = "italic 22px Georgia, serif";
     ctx.fillStyle = "#9a5a6a";
-    ctx.fillText("planted in My Memory Garden ♡", W / 2, H - 80);
+    ctx.fillText("planted in Our Memory Garden ♡", W / 2, H - 80);
 
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
