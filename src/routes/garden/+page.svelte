@@ -240,7 +240,7 @@
 </script>
 
 <svelte:head>
-  <title>My Memory Garden ♡</title>
+  <title>Our Memory Garden ♡</title>
   <meta name="description" content="Plant your special moments and watch your lily garden bloom over time." />
 </svelte:head>
 
@@ -276,7 +276,7 @@
         for the moments you hold dear
       </p>
       <h1 class="font-serif text-4xl md:text-5xl text-[oklch(0.32_0.06_25)] leading-tight">
-        My Memory Garden
+        Our Memory Garden
       </h1>
       <p class="mt-4 text-[oklch(0.45_0.04_30)] max-w-xl mx-auto">
         Plant a memory, watch a lily bloom. Every moment you treasure grows this little garden a little more.
