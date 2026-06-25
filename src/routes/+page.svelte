@@ -1,6 +1,10 @@
 <script lang="ts">
   import { reportLovableError } from "$lib/lovable-error-reporting";
   import us from "/src/lib/assets/us.jpg"
+  import { enhance } from '$app/forms';
+  
+  // SvelteKit automatically populates the 'data' prop from your +page.server.ts load function
+  let { data } = $props();
 
   type Stage = "name" | "question" | "photo" | "home";
 
