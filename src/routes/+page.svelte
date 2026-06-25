@@ -183,6 +183,12 @@
         <p class="mt-8 font-serif text-lg text-[oklch(0.5_0.12_20)]">
           — Farish ♡
         </p>
+        <a
+          href="/garden"
+          class="mt-8 inline-block px-6 py-3 rounded-xl bg-[oklch(0.65_0.14_20)] text-[oklch(0.98_0.01_85)] font-medium hover:bg-[oklch(0.6_0.16_20)] transition shadow-md"
+        >
+          ✿ Open My Memory Garden
+        </a>
       </div>
     </div>
   {/if}
