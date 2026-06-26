@@ -19,10 +19,10 @@
   };
 
   const STAGES: Stage[] = [
-    { name: "Seedling",     emoji: "🌱", min: 0,  next: 3,    message: "Your garden has just begun ♡" },
-    { name: "Sprout",       emoji: "🌿", min: 4,  next: 7,    message: "Look how it's reaching for the sun!" },
-    { name: "Bud",          emoji: "🌷", min: 8,  next: 9,    message: "A little bud — almost ready to bloom." },
-    { name: "Blooming Lily",emoji: "🌸", min: 10, next: null, message: "Full bloom. Beautiful, like you." },
+    { name: "Seedling",     emoji: "🌱", min: 0,  next: 1,    message: "Your garden has just begun ♡" },
+    { name: "Sprout",       emoji: "🌿", min: 2,  next: 3,    message: "Look how it's reaching for the sun!" },
+    { name: "Bud",          emoji: "🌷", min: 4,  next: 4,    message: "A little bud — almost ready to bloom." },
+    { name: "Blooming Lily",emoji: "🌸", min: 5, next: null, message: "Full bloom. Beautiful, like you." },
   ];
 
   // Bind directly into data returned by server load functions
