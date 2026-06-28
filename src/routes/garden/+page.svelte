@@ -442,7 +442,7 @@
   >
     <div
       onclick={(e) => e.stopPropagation()}
-      class="bg-[oklch(0.98_0.015_85)] rounded-3xl p-7 max-w-md w-full border border-[oklch(0.9_0.03_60)] shadow-2xl"
+      class="bg-[oklch(0.98_0.015_85)] rounded-3xl p-7 max-w-md w-full border border-[oklch(0.9_0.03_60)] shadow-2xl max-h-[90vh] overflow-y-auto"
     >
       <svg viewBox="-50 -50 100 100" class="w-24 h-24 mx-auto" aria-hidden="true">
         {#each Array.from({ length: 6 }) as _, i}
