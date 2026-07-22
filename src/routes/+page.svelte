@@ -1,270 +1,621 @@
 <script lang="ts">
-  import { reportLovableError } from "$lib/lovable-error-reporting";
-  import us from "/src/lib/assets/us.jpg"
   import { enhance } from '$app/forms';
-  
-  // SvelteKit automatically populates the 'data' prop from your +page.server.ts load function
-  let { data } = $props();
+  import type { CommentDto, FeedDto, FriendResponse } from '$lib/types';
+  import type { PageData } from './$types';
+  import lilyLogo from '$lib/assets/lily.png';
+  import { applyAction } from '$app/forms';
+  import type { SubmitFunction } from '@sveltejs/kit';
+  import { page } from '$app/state';
+  import { untrack } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
 
-  type Stage = "name" | "question" | "photo" | "home";
+  let { data }: { data: PageData } = $props();
 
-  // Svelte 5 State Runes
-  let stage = $state<Stage>("name");
-  let name = $state("");
-  let error = $state("");
-  let noPos = $state<{ x: number; y: number } | null>(null);
+  let posts = $state<FeedDto[]>(untrack(() => data.feeds ?? []));
+  let nextCursor = $state(untrack(() => data.nextCursor));
+  let hasMore = $state(untrack(() => data.hasMore ?? false));
+  let friends = $state<FriendResponse[]>(untrack(() => data.friends ?? []));
 
-  function submitName(e: SubmitEvent) {
-    e.preventDefault();
-    const n = name.trim().toLowerCase();
-    if (n === "amera" || n === "zahra" || n === "amera zahra" || n === "amera zahra binti mohd azwan") {
-      stage = "question";
-      error = "";
-    } else {
-      error = "Hmm, this site isn't for you ♡";
+  let activeCommentPost = $state<FeedDto | null>(null);
+  let commentText = $state('');
+  let activeComments = $state<CommentDto[]>([]);
+  let isFetchingComments = $state(false);
+  let commentsContainer = $state<HTMLDivElement | null>(null);
+
+  let commentError = $state<string | null>(null);
+  let deleteError = $state<string | null>(null);
+
+  let loading = $state(false);
+  let sentinel = $state<HTMLElement | null>(null);
+
+  async function refreshComments(postId: number | undefined) {
+    if (!postId) return;
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`);
+      if (res.ok) {
+        activeComments = (await res.json()) as CommentDto[];
+      }
+    } catch (e) {
+      console.error("Failed to reload comments", e);
     }
   }
 
-  function dodge() {
-    const pad = 80;
-    const x = Math.random() * (window.innerWidth - pad * 2) + pad;
-    const y = Math.random() * (window.innerHeight - pad * 2) + pad;
-    noPos = { x, y };
+  async function openComments(post: FeedDto) {
+    activeCommentPost = post;
+    document.body.style.overflow = 'hidden';
+
+    isFetchingComments = true;
+    try {
+      await refreshComments(post.id);
+    } finally {
+      isFetchingComments = false;
+    }
   }
 
-  function confirm() {
-    stage = "photo";
-    setTimeout(() => {
-      stage = "home";
-    }, 3000);
+  function closeComments() {
+    activeCommentPost = null;
+    commentText = '';
+    document.body.style.overflow = ''; 
   }
 
-  // PRNG Generator
-  function mulberry32(a: number) {
-    return function () {
-      a |= 0;
-      a = (a + 0x6d2b79f5) | 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+  let commentToDelete = $state<number | null>(null);
+
+  function confirmDelete(commentId: number) {
+    commentToDelete = commentId;
   }
 
-  // Svelte Action to manage canvas lifecycle seamlessly inside the template
-  function lilyCanvas(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  function cancelDelete() {
+    commentToDelete = null;
+  }
 
-    const dpr = window.devicePixelRatio || 1;
-
-    const resize = () => {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  $effect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && activeCommentPost) closeComments();
     };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  });
 
-    const drawLily = (cx: number, cy: number, size: number, rot: number, hue: number) => {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rot);
+  async function loadMore() {
+    if (loading || !hasMore || !nextCursor) return;
+    loading = true;
 
-      // Stem
-      ctx.strokeStyle = `oklch(0.65 0.1 145)`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(size * 0.3, size * 1.2, size * 0.1, size * 2.5);
-      ctx.stroke();
+    try {
+      const res = await fetch(`/api/feed?cursor=${encodeURIComponent(nextCursor)}`);
+      if (!res.ok) throw new Error('Failed to load more');
+      const json = await res.json();
 
-      // 6 petals
-      const petals = 6;
-      for (let p = 0; p < petals; p++) {
-        const angle = (p / petals) * Math.PI * 2;
-        ctx.save();
-        ctx.rotate(angle);
-        const grad = ctx.createRadialGradient(0, -size * 0.4, size * 0.05, 0, -size * 0.4, size * 0.6);
-        grad.addColorStop(0, `oklch(0.92 0.08 ${hue})`);
-        grad.addColorStop(1, `oklch(0.78 0.14 ${hue})`);
-        ctx.fillStyle = grad;
-        ctx.strokeStyle = `oklch(0.65 0.16 ${hue} / 0.5)`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(size * 0.3, -size * 0.2, size * 0.25, -size * 0.8, 0, -size);
-        ctx.bezierCurveTo(-size * 0.25, -size * 0.8, -size * 0.3, -size * 0.2, 0, 0);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-      }
+      posts = [...posts, ...json.feeds];
+      nextCursor = json.nextCursor;
+      hasMore = json.hasMore;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      loading = false;
+    }
+  }
 
-      // Stamens
-      for (let s = 0; s < 6; s++) {
-        const a = (s / 6) * Math.PI * 2;
-        ctx.strokeStyle = `oklch(0.7 0.15 60)`;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        const len = size * 0.22;
-        ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
-        ctx.stroke();
-        ctx.fillStyle = `oklch(0.55 0.18 30)`;
-        ctx.beginPath();
-        ctx.arc(Math.cos(a) * len, Math.sin(a) * len, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    };
+  $effect(() => {
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  });
 
-    const render = () => {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const isMobile = w < 768;
+  function formatTime(dateString: string | undefined): string {
+    if (!dateString) return 'Recently';
+    const diffInSeconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  }
 
-      const rand = mulberry32(42);
-      const placements: Array<{ x: number; y: number; s: number; r: number; hue: number }> = [];
-      const sides: Array<"left" | "right"> = isMobile ? ["left"] : ["left", "right"];
+  function likeEnhance(post: FeedDto): SubmitFunction {
+    return () => {
+      const wasLiked = post.likedByMe ?? false;
+      const previousCount = post.likeCount ?? 0;
 
-      sides.forEach((side) => {
-        for (let i = 0; i < (isMobile ? 4 : 7); i++) {
-          const baseX = side === "left" ? rand() * (w * 0.25) + 20 : w - rand() * (w * 0.25) - 20;
-          const baseY = (i / (isMobile ? 4 : 7)) * h + rand() * 60;
-          const s = 30 + rand() * 40;
-          placements.push({
-            x: baseX,
-            y: baseY,
-            s,
-            r: rand() * Math.PI * 2,
-            hue: 15 + rand() * 25,
-          });
+      post.likedByMe = !wasLiked;
+      post.likeCount = previousCount + (post.likedByMe ? 1 : -1);
+
+      return async ({ result, update }) => {
+        if (result.type === 'error' || result.type === 'failure') {
+          post.likedByMe = wasLiked;
+          post.likeCount = previousCount;
+          await applyAction(result);
+        } else if (result.type === 'success') {
+          await update({ reset: false });
         }
-      });
-
-      placements.forEach((p) => drawLily(p.x, p.y, p.s, p.r, p.hue));
-    };
-
-    resize();
-    render();
-
-    window.addEventListener("resize", resize);
-    window.addEventListener("resize", render);
-
-    return {
-      destroy() {
-        window.removeEventListener("resize", resize);
-        window.removeEventListener("resize", render);
-      }
+      };
     };
   }
 </script>
 
-<svelte:head>
-  <title>My Lily ♡</title>
-  <meta name="description" content="A little something made with love." />
-</svelte:head>
+<div class="min-h-screen bg-neutral-100">
+  <div class="grid grid-cols-[240px_minmax(0,480px)_280px] justify-center gap-8 max-w-280 mx-auto items-start px-5 max-[1040px]:grid-cols-[88px_minmax(0,480px)] max-[640px]:grid-cols-1 max-[640px]:px-0">
 
-<div class="min-h-screen w-full overflow-hidden relative">
-  <div class="fixed inset-0 -z-10 bg-gradient-to-br from-[oklch(0.97_0.025_85)] via-[oklch(0.95_0.03_75)] to-[oklch(0.93_0.04_25)]" />
+    <!-- Left Sidebar -->
+    <aside class="sticky top-0 h-screen py-8 flex flex-col max-[640px]:fixed max-[640px]:bottom-0 max-[640px]:left-0 max-[640px]:right-0 max-[640px]:top-auto max-[640px]:h-auto max-[640px]:bg-white max-[640px]:border-t max-[640px]:border-border max-[640px]:z-100 max-[640px]:py-1.5">
+      <div class="flex flex-col h-full gap-1 max-[640px]:flex-row max-[640px]:items-center max-[640px]:justify-around">
+        <div class="flex items-center gap-2 px-3 pb-8">
+          <img src={lilyLogo} alt="Lily Garden Logo" class="w-8 h-8" />
+          <span class="font-serif text-2xl font-medium text-[#5b3a5b] tracking-wide max-[1040px]:hidden">Lily</span>
+        </div>
 
-  {#if stage === "home"}
-    <div class="relative min-h-screen flex items-center justify-center p-6">
-      <canvas use:lilyCanvas class="fixed inset-0 pointer-events-none"></canvas>
-      <div class="relative z-10 bg-[oklch(0.98_0.015_85)] rounded-3xl px-10 py-12 max-w-xl w-full text-center shadow-[0_30px_80px_-20px_oklch(0.4_0.1_25/0.3)] border border-[oklch(0.9_0.03_60)]">
-        <p class="font-serif italic text-sm tracking-widest uppercase text-[oklch(0.6_0.1_25)] mb-4">
-          for my dearest
-        </p>
-        <h1 class="font-serif text-4xl md:text-5xl text-[oklch(0.35_0.06_25)] leading-tight mb-6">
-          Good luck on your exams
-        </h1>
-        <p class="text-[oklch(0.45_0.04_30)] leading-relaxed">
-          Every page you turn, every answer you write — I'm cheering for you.
-          You've worked so hard and I'm endlessly proud of you. Breathe, trust
-          yourself, and bloom like the lilies you love so much.
-        </p>
-        <p class="mt-8 font-serif text-lg text-[oklch(0.5_0.12_20)]">
-          — Farish ♡
-        </p>
-        <a
-          href="/garden"
-          class="mt-8 inline-block px-6 py-3 rounded-xl bg-[oklch(0.65_0.14_20)] text-[oklch(0.98_0.01_85)] font-medium hover:bg-[oklch(0.6_0.16_20)] transition shadow-md"
+        <nav class="flex flex-col gap-1 max-[640px]:flex-row max-[640px]:gap-0">
+          <a href="/">
+            <button class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 bg-pink-100 text-[#4a3050] max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11.5L12 4l9 7.5" />
+                <path d="M5 10v9.5A1.5 1.5 0 0 0 6.5 21H9v-6h6v6h2.5a1.5 1.5 0 0 0 1.5-1.5V10" />
+              </svg>
+              <span>Home</span>
+            </button>
+          </a>
+
+          <a href="/journal">
+            <button aria-label="Journal" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <span>Journal</span>
+            </button>
+          </a>
+
+          <a href="/garden/">
+            <button aria-label="Garden" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 19h18" />
+                <path d="M12 19v-8" />
+                <path d="M12 13c-1.8-.2-3-1.4-3.2-3.2 1.8 0 3.2 1 3.2 3.2z" fill="currentColor" fill-opacity="0.1" />
+                <path d="M12 11c1.8-.2 3-1.4 3.2-3.2-1.8 0-3.2 1-3.2 3.2z" fill="currentColor" fill-opacity="0.1" />
+                <circle cx="12" cy="6.5" r="1.6" fill="currentColor" fill-opacity="0.12" />
+                <path d="M12 4.9v-1" />
+                <path d="M13.4 5.7l.8-.8" />
+                <path d="M10.6 5.7l-.8-.8" />
+                <path d="M6.5 19v-4" />
+                <path d="M6.5 15.5c-1.4 0-2.3-.9-2.5-2.2 1.4 0 2.5.8 2.5 2.2z" fill="currentColor" fill-opacity="0.1" />
+                <path d="M17.5 19v-3" />
+                <path d="M17.5 16c1.4 0 2.3-.9 2.5-2.2-1.4 0-2.5.8-2.5 2.2z" fill="currentColor" fill-opacity="0.1" />
+              </svg>
+              <span>Garden</span>
+            </button>
+          </a>
+
+          <a href="/notification">
+            <button aria-label="Notifications" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              {#if page.data.hasNotifications}
+                <span class="absolute top-2.5 left-6.5 w-2 h-2 bg-amber-400 rounded-full border-2 border-white"></span>
+              {/if}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span>Notifications</span>
+            </button>
+          </a>
+
+          <a href="/explore">
+            <button aria-label="Explore" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <span>Explore</span>
+            </button>
+          </a>
+        </nav>
+
+        <div class="mt-auto flex flex-col gap-1 pb-3 max-[640px]:flex-row max-[640px]:mt-0 max-[640px]:gap-0 max-[640px]:pb-0">
+          <a href="/create">
+            <button aria-label="Create" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+              <span>Create</span>
+            </button>
+          </a>
+
+          <a href="/profile">
+            <button aria-label="Profile" class="relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left text-[#6b5b6b] [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 hover:bg-pink-50 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Profile</span>
+            </button>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Feed -->
+    <main class="min-w-0">
+      <div class="flex flex-col gap-6 py-8 max-[640px]:pb-17.5">
+        {#if !data.success}
+          <div class="text-center p-8 text-muted-foreground"><p>{data.error ?? 'Failed to load feed.'}</p></div>
+        {:else if posts.length === 0}
+          <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground italic">
+            <p class="m-0">No posts created yet.</p>
+          </div>
+        {:else}
+          {#each posts as post, index (post.id)}
+            <article
+              class="bg-white rounded-2xl overflow-hidden shadow-sm opacity-0 animate-fade-up"
+              style="animation-delay: {(index % 10) * 0.1}s"
+            >
+              <div class="flex items-center justify-between py-4 px-5">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300">
+                    <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-[1.1rem]">
+                      {post.author?.displayName?.charAt(0).toUpperCase() ??
+                        post.author?.username?.charAt(0).toUpperCase() ??
+                        'U'}
+                    </div>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="font-semibold text-sm text-[#4a3050]">{post.author?.displayName ?? post.author?.username ?? 'Unknown'}</span>
+                    <span class="text-xs text-muted-foreground">{formatTime(post.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="relative w-full aspect-square overflow-hidden bg-neutral-100">
+                {#if post.mediaType === 1}
+                  <!-- svelte-ignore a11y_media_has_caption -->
+                  <video src={post.mediaUrl} controls class="w-full h-full object-cover"></video>
+                {:else}
+                  <img
+                    src={post.mediaUrl ||
+                      'https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=600&h=600&fit=crop'}
+                    alt={post.caption ?? 'Post'}
+                    class="w-full h-full object-cover"
+                  />
+                {/if}
+                <div class="absolute bottom-0 left-0 right-0 h-15 bg-linear-to-b from-transparent to-white/30 pointer-events-none"></div>
+              </div>
+
+              <div class="flex items-center py-3 px-5 pb-2 gap-1">
+                <form method="POST" action={post.likedByMe ? '?/unlike' : '?/like'} use:enhance={likeEnhance(post)}>
+                  <input type="hidden" name="postId" value={post.id} />
+                  <button
+                    type="submit"
+                    class="border-none cursor-pointer p-2 rounded-full transition-all flex items-center justify-center hover:bg-pink-50 hover:scale-110 {post.likedByMe ? 'text-amber-400 animate-bloom' : 'text-[#6b5b6b]'}"
+                  >
+                    <span class="text-3xl leading-none flex items-center justify-center w-8 h-8 select-none">❀</span>
+                  </button>
+                </form>
+
+                <button
+                  type="button"
+                  aria-label="Open comments"
+                  onclick={() => openComments(post)}
+                  class="border-none cursor-pointer p-2 rounded-full transition-all flex items-center justify-center text-[#6b5b6b] hover:bg-pink-50 [&_svg]:size-5.5"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="py-0 px-5 pb-1.5 text-sm font-semibold text-[#4a3050] flex items-center gap-1.5">
+                <span class="text-amber-400 text-sm">❀</span>
+                <span>{(post.likeCount ?? 0).toLocaleString()} blooms</span>
+              </div>
+
+              {#if post.caption}
+                <div class="py-0 px-5 pb-2 text-sm leading-relaxed text-[#4a3050]">
+                  <span class="font-semibold mr-1.5">{post.author?.displayName ?? post.author?.username ?? 'Unknown'}</span>
+                  <span>{post.caption}</span>
+                </div>
+              {/if}
+
+              {#if post.commentCount && post.commentCount > 0}
+                <button
+                  class="border-none cursor-pointer py-0 px-5 pb-4 text-[0.78rem] text-muted-foreground hover:text-[#6b5b6b]"
+                  onclick={() => openComments(post)}
+                >
+                  View all {post.commentCount} comments
+                </button>
+              {/if}
+            </article>
+          {/each}
+        {/if}
+
+        <div bind:this={sentinel} class="h-px" aria-hidden="true"></div>
+
+        {#if loading}
+          <div class="text-center p-8 text-muted-foreground"><p>Loading more blooms...</p></div>
+        {/if}
+
+        {#if !hasMore && posts.length > 0}
+          <div class="text-center p-8 text-muted-foreground"><p>You've reached the end of the garden.</p></div>
+        {/if}
+      </div>
+    </main>
+
+    <!-- Right Column: Mutuals -->
+    <aside class="sticky top-0 h-screen py-8 max-[1040px]:hidden">
+      <div class="flex flex-col gap-4">
+        <div class="text-xs font-bold tracking-widest uppercase text-violet-400 px-1">
+          <span>Mutual friends</span>
+        </div>
+        <ul class="list-none flex flex-col gap-1">
+          {#if !data.success}
+            <div class="text-center p-8 text-muted-foreground"><p>{data.error ?? 'Failed to load friends.'}</p></div>
+          {:else if friends.length === 0}
+            <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground italic">
+              <p class="m-0">No mutual friends at this time.</p>
+            </div>
+          {:else}
+            {#each friends as friend (friend.id)}
+              <li class="flex items-center gap-3 p-2 rounded-2xl transition-colors hover:bg-white">
+                <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
+                  <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-sm">{friend.displayName?.charAt(0).toUpperCase()}</div>
+                </div>
+                <span class="flex-1 text-sm font-semibold text-[#4a3050] whitespace-nowrap overflow-hidden text-ellipsis">{friend.displayName}</span>
+                <a
+                  href="/garden/{friend.id}"
+                  aria-label={`Visit ${friend.displayName}'s garden`}
+                  class="cursor-pointer p-1.5 rounded-full text-[#6b5b6b] flex items-center justify-center shrink-0 transition-all hover:bg-amber-50 hover:text-amber-500 hover:scale-[1.08] [&_svg]:w-5 [&_svg]:h-5"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 19h18" />
+                    <path d="M12 19v-8" />
+                    <path d="M12 13c-1.8-.2-3-1.4-3.2-3.2 1.8 0 3.2 1 3.2 3.2z" fill="currentColor" fill-opacity="0.1" />
+                    <path d="M12 11c1.8-.2 3-1.4 3.2-3.2-1.8 0-3.2 1-3.2 3.2z" fill="currentColor" fill-opacity="0.1" />
+                    <circle cx="12" cy="6.5" r="1.6" fill="currentColor" fill-opacity="0.12" />
+                    <path d="M12 4.9v-1" />
+                    <path d="M13.4 5.7l.8-.8" />
+                    <path d="M10.6 5.7l-.8-.8" />
+                    <path d="M6.5 19v-4" />
+                    <path d="M6.5 15.5c-1.4 0-2.3-.9-2.5-2.2 1.4 0 2.5.8 2.5 2.2z" fill="currentColor" fill-opacity="0.1" />
+                    <path d="M17.5 19v-3" />
+                    <path d="M17.5 16c1.4 0 2.3-.9 2.5-2.2-1.4 0-2.5.8-2.5 2.2z" fill="currentColor" fill-opacity="0.1" />
+                  </svg>
+                </a>
+              </li>
+            {/each}
+          {/if}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+
+{#if activeCommentPost}
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs z-1000 flex items-center justify-center max-[640px]:items-end"
+    onclick={closeComments}
+    onkeydown={(e) => e.key === 'Escape' && closeComments()}
+    role="presentation"
+  >
+    <div
+      class="bg-white w-full max-w-120 h-[80vh] max-h-175 rounded-4xl flex flex-col shadow-xl overflow-hidden max-[640px]:h-[90vh] max-[640px]:max-h-none max-[640px]:rounded-b-none max-[640px]:mt-auto"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-label="Comments modal"
+    >
+      <div class="flex items-center justify-between py-4 px-5 border-b border-border bg-white z-2">
+        <h3 class="text-lg font-semibold text-[#4a3050]">Comments</h3>
+        <button
+          type="button"
+          aria-label="Close comments"
+          onclick={closeComments}
+          class="border-none cursor-pointer text-muted-foreground p-1 rounded-full flex items-center justify-center transition-colors hover:bg-pink-50 hover:text-[#4a3050] [&_svg]:size-5"
         >
-          ✿ Open Our Memory Garden
-        </a>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4" bind:this={commentsContainer}>
+        <div class="flex gap-3">
+          <div class="w-9 h-9 rounded-full bg-linear-to-br from-brand-pink to-brand-amber p-0.5 shrink-0">
+            <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-sm overflow-hidden">
+              {#if activeCommentPost.author?.profilePictureUrl}
+                <img src={activeCommentPost.author.profilePictureUrl} alt="" class="w-full h-full object-cover" />
+              {:else}
+                {(activeCommentPost.author?.displayName ?? activeCommentPost.author?.username ?? 'U').charAt(0).toUpperCase()}
+              {/if}
+            </div>
+          </div>
+          <div class="flex-1 text-sm leading-snug">
+            <span class="font-semibold text-[#4a3050] mr-1.5">
+              {activeCommentPost.author?.displayName ?? activeCommentPost.author?.username ?? 'Unknown'}
+            </span>
+            <span class="text-[#4a3050]">{activeCommentPost.caption ?? ''}</span>
+            <div class="text-xs text-muted-foreground mt-1">{formatTime(activeCommentPost.createdAt)}</div>
+          </div>
+        </div>
+
+        <hr class="border-t border-slate-200 dark:border-slate-800 my-2" />
+
+        {#if isFetchingComments}
+          <div class="text-center text-muted-foreground text-sm py-8">Loading comments…</div>
+        {:else}
+          {#each activeComments as comment (comment.id)}
+            <div class="flex gap-3 group items-start">
+              <div class="w-8 h-8 rounded-full bg-linear-to-br from-brand-pink to-brand-amber p-[1.5px] shrink-0">
+                <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-xs overflow-hidden">
+                  {#if comment.author?.profilePictureUrl}
+                    <img src={comment.author.profilePictureUrl} alt="" class="w-full h-full object-cover" />
+                  {:else}
+                    {(comment.author?.displayName ?? comment.author?.username ?? 'U').charAt(0).toUpperCase()}
+                  {/if}
+                </div>
+              </div>
+
+              <div class="flex-1 text-sm leading-snug">
+                <span class="font-semibold text-[#4a3050] mr-1.5">
+                  {comment.author?.displayName ?? comment.author?.username ?? 'User'}
+                </span>
+                <span class="text-[#4a3050]">{comment.content}</span>
+                <div class="text-xs text-muted-foreground mt-1">{formatTime(comment.createdAt)}</div>
+              </div>
+
+              {#if data.me && (comment.author?.id === data.me.id || activeCommentPost.author?.id === data.me.id)}
+                <button
+                  type="button"
+                  aria-label="Delete comment"
+                  onclick={() => confirmDelete(comment.id)}
+                  class="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-500 bg-transparent border-none cursor-pointer rounded-full"
+                >
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                  </svg>
+                </button>
+              {/if}
+            </div>
+          {:else}
+            <div class="text-center text-muted-foreground text-sm py-8">
+              <p>No comments yet. Start the conversation!</p>
+            </div>
+          {/each}
+        {/if}
+      </div>
+
+      <div class="py-4 px-5 border-t border-border bg-white">
+        <form
+          method="POST"
+          action="?/addComment"
+          class="flex flex-col"
+          use:enhance={() => {
+            return async ({ result, update }) => {
+              if (result.type === 'success') {
+                commentText = '';
+                if (activeCommentPost) {
+                  await refreshComments(activeCommentPost.id);
+                }
+
+                if (commentsContainer) {
+                  const container = commentsContainer;
+                  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+                }
+              }
+              update({ reset: false });
+            };
+          }}
+        >
+          <input type="hidden" name="postId" value={activeCommentPost.id} />
+
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+              {#if data.me?.profilePictureUrl}
+                <img src={data.me.profilePictureUrl} alt="Me" class="w-full h-full object-cover" />
+              {:else}
+                {(data.me?.displayName ?? data.me?.username ?? 'M').charAt(0).toUpperCase()}
+              {/if}
+            </div>
+
+            <input
+              type="text"
+              name="content"
+              placeholder="Add a comment..."
+              bind:value={commentText}
+              autocomplete="off"
+              required
+              class="flex-1 bg-transparent border-none outline-none font-[inherit] text-sm text-[#4a3050] placeholder:text-muted-foreground"
+            />
+            <button
+              type="submit"
+              disabled={!commentText.trim()}
+              class="border-none font-[inherit] font-semibold cursor-pointer text-sm transition-colors text-amber-500 hover:text-amber-600 disabled:text-muted-foreground disabled:cursor-default disabled:opacity-50"
+            >
+              Post
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-  {/if}
+  </div>
+{/if}
 
-  {#if stage === "name"}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[oklch(0.3_0.04_30/0.35)] backdrop-blur-sm p-6">
-      <div class="bg-[oklch(0.98_0.015_85)] rounded-3xl p-8 max-w-md w-full shadow-[0_30px_60px_-20px_oklch(0.4_0.1_25/0.3)] border border-[oklch(0.9_0.02_60)]">
-        <h2 class="font-serif text-3xl text-[oklch(0.35_0.05_25)] mb-2">Who are you?</h2>
-        <p class="text-sm text-[oklch(0.5_0.04_30)] mb-6">whisper your name, lovely</p>
-        <form onsubmit={submitName} class="flex flex-col gap-3">
-          <input
-            autofocus
-            bind:value={name}
-            class="px-4 py-3 rounded-xl bg-[oklch(0.98_0.015_85)] border border-[oklch(0.85_0.03_30)] outline-none focus:border-[oklch(0.65_0.12_20)] text-center text-lg"
-            placeholder="your name"
-          />
-          {#if error}
-            <p class="text-sm text-[oklch(0.55_0.18_25)]">{error}</p>
-          {/if}
+{#if commentToDelete !== null}
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs z-1100 flex items-center justify-center p-4"
+    onclick={cancelDelete}
+    onkeydown={(e) => e.key === 'Escape' && cancelDelete()}
+    role="presentation"
+  >
+    <div
+      class="bg-white w-full max-w-80 rounded-2xl p-6 shadow-xl flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95 duration-150"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+    >
+      <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
+        <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+      </div>
+
+      <div>
+        <h4 id="delete-dialog-title" class="text-base font-semibold text-[#4a3050]">Delete Comment?</h4>
+        <p class="text-xs text-muted-foreground mt-1">Are you sure you want to delete this comment? This action cannot be undone.</p>
+      </div>
+
+      {#if deleteError}
+        <p class="text-xs text-red-500 mt-2">{deleteError}</p>
+      {/if}
+
+      <div class="flex items-center gap-3 w-full mt-2">
+        <button
+          type="button"
+          onclick={cancelDelete}
+          class="flex-1 py-2 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+
+        <form
+          method="POST"
+          action="?/deleteComment"
+          class="flex-1"
+          use:enhance={() => {
+            return async ({ result }) => {
+              if (result.type === 'success') {
+                const deletedId = commentToDelete;
+                commentToDelete = null;
+                deleteError = null;
+
+                if (deletedId !== null) {
+                  activeComments = activeComments.filter((c) => c.id !== deletedId);
+                }
+                if (activeCommentPost) {
+                  await refreshComments(activeCommentPost.id);
+                }
+              } else if (result.type === 'failure') {
+                deleteError = (result.data as { error?: string })?.error ?? 'Could not delete this comment.';
+              }
+            };
+          }}
+        >
+          <input type="hidden" name="commentId" value={commentToDelete} />
           <button
             type="submit"
-            class="mt-2 px-6 py-3 rounded-xl bg-[oklch(0.65_0.12_20)] text-[oklch(0.98_0.01_85)] font-medium hover:bg-[oklch(0.6_0.14_20)] transition cursor-pointer"
+            class="w-full py-2 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors cursor-pointer border-none"
           >
-            Enter ♡
+            Delete
           </button>
         </form>
       </div>
     </div>
-  {/if}
-
-  {#if stage === "question"}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[oklch(0.3_0.04_30/0.35)] backdrop-blur-sm p-6">
-      <div class="bg-[oklch(0.98_0.015_85)] rounded-3xl p-8 max-w-md w-full shadow-[0_30px_60px_-20px_oklch(0.4_0.1_25/0.3)] border border-[oklch(0.9_0.02_60)]">
-        <h2 class="font-serif text-2xl text-[oklch(0.35_0.05_25)] mb-6 text-center">
-          Is it true you are Farish's girlfriend?
-        </h2>
-        <div class="flex gap-4 justify-center relative">
-          <button
-            onclick={confirm}
-            class="px-6 py-3 rounded-xl bg-[oklch(0.65_0.12_20)] text-[oklch(0.98_0.01_85)] font-medium hover:bg-[oklch(0.6_0.14_20)] transition cursor-pointer"
-          >
-            Definitely!
-          </button>
-          <button
-            onmouseenter={dodge}
-            ontouchstart={dodge}
-            onfocus={dodge}
-            onclick={dodge}
-            style={noPos ? `position: fixed; left: ${noPos.x}px; top: ${noPos.y}px; transition: left 0.25s ease, top 0.25s ease; z-index: 60;` : undefined}
-            class="px-6 py-3 rounded-xl bg-[oklch(0.92_0.02_85)] text-[oklch(0.4_0.05_30)] font-medium border border-[oklch(0.85_0.03_30)] cursor-pointer"
-          >
-            No
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  {#if stage === "photo"}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[oklch(0.3_0.04_30/0.35)] backdrop-blur-sm p-6">
-      <div class="bg-[oklch(0.98_0.015_85)] rounded-3xl p-8 max-w-md w-full shadow-[0_30px_60px_-20px_oklch(0.4_0.1_25/0.3)] border border-[oklch(0.9_0.02_60)]">
-        <img
-          src={us}
-          alt="lilies for you"
-          width="1024"
-          height="1024"
-          class="w-72 h-72 object-cover rounded-2xl mx-auto"
-        />
-        <p class="mt-5 font-serif text-2xl text-center text-[oklch(0.4_0.08_20)]">
-          We are so cute together!
-        </p>
-      </div>
-    </div>
-  {/if}
-</div>
+  </div>
+{/if}
