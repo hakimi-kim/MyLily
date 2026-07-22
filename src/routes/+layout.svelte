@@ -1,21 +1,38 @@
 <script lang="ts">
   import "./layout.css";
   import type { Snippet } from "svelte";
+  import { Toaster } from '$lib/components/ui/sonner';
+  import { afterNavigate, invalidate } from '$app/navigation';
   
   let { children }: { children: Snippet } = $props();
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('submit', (e) => {
+      const formElement = e.target as HTMLFormElement;
+
+      if (formElement.dataset.submitted === 'true') {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      formElement.dataset.submitted = 'true';
+
+      setTimeout(() => {
+        delete formElement.dataset.submitted;
+      }, 0);
+    }, true);
+  }
+
+	afterNavigate(() => {
+		invalidate('app:notifications');
+	});
 </script>
 
-<svelte:head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lovable App</title>
-  <meta name="description" content="Lovable Generated Project" />
-  <meta name="author" content="Lovable" />
-  <meta property="og:title" content="Lovable App" />
-  <meta property="og:description" content="Lovable Generated Project" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:site" content="@Lovable" />
-</svelte:head>
 
-{@render children()}
+
+<div class="bg-neutral-100">
+  {@render children()}
+</div>
+
+<Toaster richColors position="top-right" />

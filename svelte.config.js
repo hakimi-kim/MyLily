@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -12,9 +12,13 @@ const config = {
 	},
 
 	kit: {
-		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 		adapter: adapter()
 	}
+
+	// Add this block to quiet down a11y checks temporarily
+	// compilerOptions: {
+	// 	warningFilter: (warning) => !warning.code.startsWith('a11y_')
+	// }
 };
 
 export default config;

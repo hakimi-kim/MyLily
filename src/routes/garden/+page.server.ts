@@ -1,79 +1,73 @@
-// src/routes/garden/+page.server.ts
-import { sql } from '$lib/server/db';
-import { fail } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { lilyAPI, APIError, gardenAPI, userAPI } from '$lib/services/api.server';
+import { fail, redirect } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './[id]/$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ cookies }) => {
+	const token = cookies.get('token');
+	if (!token) throw redirect(303, '/login');
+
 	try {
-		// Fetch shared memories sorted newest first from Neon
-		const memories = await sql`
-      SELECT id, title, description, date, hue, created_at as "createdAt" 
-      FROM memories 
-      ORDER BY created_at DESC
-    `;
-		return { memories };
+		const [lilies, visitors, me] = await Promise.all([
+			lilyAPI.getGarden(token),
+			gardenAPI.getAllVisit(token),
+			userAPI.getMe(token)
+		]);
+		return { lilies, visitors, showWishText: me.showWishesToVisitors };
 	} catch (error) {
-		console.error('Failed to load shared memory garden:', error);
-		return { memories: [] };
+		if (error instanceof APIError && (error.status === 401 || error.status === 403)) {
+			cookies.delete('token', { path: '/' });
+			throw redirect(303, '/login');
+		}
+		return {
+			lilies: [],
+			error: error instanceof Error ? error.message : 'Failed to load garden'
+		};
 	}
 };
 
 export const actions: Actions = {
-	plant: async ({ request }) => {
-		const formData = await request.formData();
-		const title = formData.get('title')?.toString().trim();
-		const description = formData.get('description')?.toString().trim() || '';
-		const date = formData.get('date')?.toString() || new Date().toISOString().slice(0, 10);
+	plantWish: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
 
-		if (!title) {
-			return fail(400, { error: 'A title is required to plant a memory.' });
+		const form = await request.formData();
+		const wishText = form.get('wishText')?.toString().trim();
+		const category = Number(form.get('category'));
+		const type = Number(form.get('type'));
+		const targetDateRaw = form.get('targetDate')?.toString();
+
+		if (!wishText) {
+			return fail(400, { error: 'A wish needs words.' });
 		}
 
-		// Generate random layout metrics natively on the server before database write
-		const id = crypto.randomUUID();
-		const hue = 320 + Math.floor(Math.random() * 60) - 30;
+		const targetDate = type === 0 ? targetDateRaw || null : null;
+		if (type === 0 && !targetDate) {
+			return fail(400, { error: 'Goal-oriented wishes need a target date.' });
+		}
 
 		try {
-			await sql`
-        INSERT INTO memories (id, title, description, date, hue) 
-        VALUES (${id}, ${title}, ${description}, ${date}, ${hue})
-      `;
-			return { success: true, plantedId: id };
+			await lilyAPI.create(token, { wishText, category, type, targetDate });
+			return { success: true };
 		} catch (error) {
-			console.error('Neon insert failed:', error);
-			return fail(500, { error: 'Database rejected the seed.' });
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Could not plant this wish.'
+			});
 		}
 	},
 
-	edit: async ({ request }) => {
-        const data = await request.formData();
-        const id = data.get('id');
-        const title = data.get('title');
-        const description = data.get('description');
-        const date = data.get('date');
-
-        // Update the database where the ID matches
-        await sql`
-            UPDATE memories 
-            SET title = ${title}, description = ${description}, date = ${date}
-            WHERE id = ${id}
-        `;
-
-        return { success: true };
-    },
-
-	remove: async ({ request }) => {
-		const formData = await request.formData();
-		const id = formData.get('id')?.toString();
-
-		if (!id) return fail(400, { error: 'Missing memory ID' });
-
+	toggleWishVisibility: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+		
+		const form = await request.formData();
+		const visible = form.get('visible') === 'true';
 		try {
-			await sql`DELETE FROM memories WHERE id = ${id}`;
+			await userAPI.updateWishVisibility(token, visible);
 			return { success: true };
 		} catch (error) {
-			console.error('Neon delete failed:', error);
-			return fail(500, { error: 'Could not remove memory from database.' });
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Could not update visibility.'
+			});
 		}
 	}
 };
