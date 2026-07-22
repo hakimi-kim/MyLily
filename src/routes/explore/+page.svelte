@@ -19,7 +19,7 @@
       <div class="flex flex-col h-full gap-1 max-[640px]:flex-row max-[640px]:items-center max-[640px]:justify-around">
         <div class="flex items-center gap-2 px-3 pb-8">
           <img src={lilyLogo} alt="Lily Garden Logo" class="w-8 h-8" />
-          <span class="font-serif text-2xl font-medium text-[#5b3a5b] tracking-wide max-[1040px]:hidden">Lily</span>
+          <span class="font-serif text-2xl font-medium text-[#5b3a5b] tracking-wide max-[1040px]:hidden">Stargazerr</span>
         </div>
 
         <nav class="flex flex-col gap-1 max-[640px]:flex-row max-[640px]:gap-0">
