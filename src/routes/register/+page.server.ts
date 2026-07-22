@@ -9,13 +9,14 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const username = (form.get('username') as string)?.trim();
 		const password = form.get('password') as string;
+		const confirmPassword = form.get('confirmPassword') as string;
 		const displayName = (form.get('displayName') as string)?.trim();
 
-		if (!username || !password) {
+		if (!username || !password || !confirmPassword) {
 			return fail(400, {
 				username,
 				displayName,
-				error: 'Username and password are required.'
+				error: 'Username, password, and password confirmation are required.'
 			});
 		}
 
@@ -32,6 +33,14 @@ export const actions: Actions = {
 				username,
 				displayName,
 				error: 'Password must be at least 8 characters long.'
+			});
+		}
+
+		if (password !== confirmPassword) {
+			return fail(400, {
+				username,
+				displayName,
+				error: 'Passwords do not match.'
 			});
 		}
 
