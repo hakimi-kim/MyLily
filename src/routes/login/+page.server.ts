@@ -25,12 +25,12 @@ export const actions: Actions = {
 			});
 		}
 
-		if (!EMAIL_REGEX.test(username)) {
-			return fail(400, {
-				username,
-				error: 'Username must be a valid email address.'
-			});
-		}
+		// if (!EMAIL_REGEX.test(username)) {
+		// 	return fail(400, {
+		// 		username,
+		// 		error: 'Username must be a valid email address.'
+		// 	});
+		// }
 
 		try {
 			const response = await authAPI.login({ username, password });

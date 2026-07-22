@@ -24,7 +24,7 @@
 	}
 </script>
 
-<div class="max-w-160 mx-auto px-5 py-8">
+<div class="min-h-screen bg-neutral-100 mx-auto px-5 py-8">
   {#if !data.success}
     <div class="flex flex-col items-center justify-center min-h-87.5 p-8 text-center bg-white/50 backdrop-blur-sm rounded-2xl border border-rose-100 shadow-xs">
       <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center mb-4">
