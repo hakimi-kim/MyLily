@@ -65,7 +65,7 @@
   <nav class="absolute top-0 inset-x-0 z-40 h-16 px-12 flex items-center justify-between bg-parchment/90 backdrop-blur-sm border-b border-border">
     <div class="flex items-center gap-2">
       <img src={lilyLogo} alt="Lily" class="w-7 h-7" />
-      <span class="font-serif text-xl font-medium text-ink tracking-wide">Lily</span>
+      <span class="font-serif text-xl font-medium text-ink tracking-wide">Stargazerr</span>
     </div>
     <button onclick={() => history.back()} class="text-sm text-sepia hover:text-ink transition-colors">Home</button>
   </nav>

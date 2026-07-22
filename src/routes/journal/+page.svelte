@@ -177,7 +177,7 @@
   <nav class="h-14 px-12 flex items-center justify-between bg-white/60 backdrop-blur-md border-b border-black/5">
     <div class="flex items-center gap-1.5">
       <img src={lilyLogo} alt="Lily" class="w-5 h-5" />
-      <span class="font-serif text-lg font-medium text-ink tracking-wide">Lily</span>
+      <span class="font-serif text-lg font-medium text-ink tracking-wide">Stargazerr</span>
     </div>
     <a href="/" class="text-xs text-sepia hover:text-ink transition-colors">Home</a>
   </nav>
