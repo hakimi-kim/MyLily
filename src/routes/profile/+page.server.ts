@@ -69,5 +69,29 @@ export const actions: Actions = {
 				error: error instanceof Error ? error.message : 'Failed to update your picture.'
 			});
 		}
+	},
+
+	updateDisplayName: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const formData = await request.formData();
+		const displayName = (formData.get('displayName') as string)?.trim();
+
+		if (!displayName) {
+			return fail(400, { error: 'Display name cannot be empty.' });
+		}
+		if (displayName.length > 50) {
+			return fail(400, { error: 'Display name must be 50 characters or fewer.' });
+		}
+
+		try {
+			await userAPI.updateDisplayName(token, displayName);
+			return { success: true };
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to update your display name.'
+			});
+		}
 	}
 };

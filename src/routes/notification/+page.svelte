@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
+  import { enhance } from "$app/forms";
   import { page } from "$app/state";
   import lilyLogo from "$lib/assets/lily.png";
-	import Sidebar from "$lib/components/Sidebar.svelte";
+  import Sidebar from "$lib/components/Sidebar.svelte";
 
   let { data } = $props();
 
   let items = $derived(data.items ?? []);
+  let justAcceptedId = $state<string | null>(null);
 
   function formatTime(iso: string) {
     try {
@@ -49,14 +50,22 @@
                 <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-lg shrink-0">🌸</div>
               {:else}
                 <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
-                  <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-sm">
-                    {(item.actor?.displayName ?? item.actor?.username ?? '?').charAt(0).toUpperCase()}
-                  </div>
+                  {#if item.actor?.profilePictureUrl}
+                    <img
+                      src={item.actor.profilePictureUrl}
+                      alt={item.actor?.displayName ?? item.actor?.username ?? 'Actor avatar'}
+                      class="w-full h-full rounded-full object-cover border-2 border-white"
+                    />
+                  {:else}
+                    <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-sm">
+                      {(item.actor?.displayName ?? item.actor?.username ?? '?').charAt(0).toUpperCase()}
+                    </div>
+                  {/if}
                 </div>
               {/if}
 
               <div class="flex-1 min-w-0">
-                <p class="text-sm text-[#4a3050] leading-snug">
+                <div class="text-sm text-[#4a3050] leading-snug">
                   {#if item.type === 'lily_confirmation'}
                     Your wish <span class="italic">"{item.wishText}"</span> is ready — did it come true?
                   {:else if item.type === 'lily_bloomed'}
@@ -69,30 +78,45 @@
                       bloomed your post
                       {#if item.postCaption}<span class="text-muted-foreground">— "{item.postCaption}"</span>{/if}
                     {:else if item.type === 'comment'}
-                      commented: <span class="text-muted-foreground">"{item.commentContent}"</span>
+                      <form method="POST" action="?/deleteComment" use:enhance>
+                        <input type="hidden" name="commentId" value={item.commentId} />
+                        <button type="submit" class="text-xs text-muted-foreground hover:text-red-500">Delete</button>
+                      </form>
                     {/if}
                   {/if}
-                </p>
+                </div>
                 <p class="text-xs text-muted-foreground mt-0.5">{formatTime(item.createdAt)}</p>
               </div>
 
               {#if item.type === 'friend_request'}
-                <div class="flex gap-2 shrink-0">
-                  <form method="POST" action="?/respond" use:enhance>
-                    <input type="hidden" name="requestId" value={item.requestId} />
-                    <input type="hidden" name="accept" value="true" />
-                    <button type="submit" class="px-3 py-1.5 rounded-full bg-[#65a0a0] text-white text-xs font-semibold cursor-pointer hover:opacity-90">
-                      Accept
-                    </button>
-                  </form>
-                  <form method="POST" action="?/respond" use:enhance>
-                    <input type="hidden" name="requestId" value={item.requestId} />
-                    <input type="hidden" name="accept" value="false" />
-                    <button type="submit" class="px-3 py-1.5 rounded-full bg-neutral-100 text-[#6b5b6b] text-xs font-semibold cursor-pointer hover:bg-neutral-200">
-                      Decline
-                    </button>
-                  </form>
-                </div>
+                {#if justAcceptedId === item.id}
+                  <span class="text-xs text-sage font-medium px-3 py-1.5">You're now friends 🌸</span>
+                {:else}
+                  <div class="flex gap-2 shrink-0">
+                    <form method="POST" action="?/respond" use:enhance={() => {
+                      return async ({ result, update }) => {
+                        if (result.type === 'success') {
+                          justAcceptedId = item.id;
+                          setTimeout(async () => {
+                            justAcceptedId = null;
+                            await update();
+                          }, 1500);
+                        } else {
+                          await update();
+                        }
+                      };
+                    }}>
+                      <input type="hidden" name="requestId" value={item.requestId} />
+                      <input type="hidden" name="accept" value="true" />
+                      <button type="submit" class="px-3 py-1.5 rounded-full bg-[#65a0a0] text-white text-xs font-semibold cursor-pointer hover:opacity-90">Accept</button>
+                    </form>
+                    <form method="POST" action="?/respond" use:enhance>
+                      <input type="hidden" name="requestId" value={item.requestId} />
+                      <input type="hidden" name="accept" value="false" />
+                      <button type="submit" class="px-3 py-1.5 rounded-full bg-neutral-100 text-[#6b5b6b] text-xs font-semibold cursor-pointer hover:bg-neutral-200">Decline</button>
+                    </form>
+                  </div>
+                {/if}
               {:else if item.type === 'lily_confirmation'}
                 <a href="/lily/{item.lilyId}">
                   <button class="px-3 py-1.5 rounded-full bg-[#65a0a0] text-white text-xs font-semibold cursor-pointer hover:opacity-90">

@@ -43,5 +43,37 @@ export const actions: Actions = {
 				error: error instanceof Error ? error.message : 'Failed to send request'
 			});
 		}
+	},
+
+	respond: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const data = await request.formData();
+		const requestId = Number(data.get('requestId'));
+		const accept = data.get('accept') === 'true';
+
+		try {
+			await friendAPI.createResponse(token, requestId, accept);
+			return { success: true };
+		} catch (error) {
+			return fail(400, { error: error instanceof Error ? error.message : 'Failed to respond' });
+		}
+	},
+
+	removeFriend: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const data = await request.formData();
+		const friendId = Number(data.get('friendId'));
+		try {
+			await friendAPI.removeFriend(token, friendId);
+			return { success: true };
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Failed to remove friend'
+			});
+		}
 	}
 };

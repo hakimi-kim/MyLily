@@ -9,6 +9,7 @@ export type NotificationItem = {
 	requestId?: number;
 	postId?: number;
 	postCaption?: string;
+	commentId?: number;
 	commentContent?: string;
 	lilyId?: number;
 	wishText?: string;
@@ -99,6 +100,7 @@ export async function getNotificationItems(token: string): Promise<NotificationI
 				createdAt: comment.createdAt,
 				postId: post.id,
 				postCaption: post.caption,
+				commentId: comment.id,
 				commentContent: comment.content
 			});
 		}
