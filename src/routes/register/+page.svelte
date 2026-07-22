@@ -25,142 +25,138 @@
   function toggleConfirmationPasswordVisibility() {
     showConfirmPassword = !showConfirmPassword;
   }
-  
 </script>
 
 <div 
-  class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat" 
+  class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat flex items-center justify-center p-4 bg-[#fdf6f9]/60 backdrop-blur-sm" 
   style="background-image: url('C:\\Users\\VICTUS\\Coding\\personal\\Lily\\MyLilyFrontend\\src\\lib\\assets\\lillies.jpg');"
 >
-  <!-- Overlay for readability and contrast -->
-  <div class="flex min-h-screen w-full items-center justify-center px-4 bg-[#fdf6f9]/60 backdrop-blur-sm">
-    <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95">
-      <Card.Header>
-        <Card.Title class="text-2xl">Register</Card.Title>
-        <Card.Description>Create an account to get started</Card.Description>
-      </Card.Header>
-      <Card.Content>
-        <form 
-          method="POST" 
-          action="?/register" 
-          use:enhance={() => {
-            isSubmitting = true;
-            return async ({ update }) => {
-              isSubmitting = false;
-              // reset: false prevents inputs from being wiped out while updating form errors
-              await update({ reset: false });
-            };
-          }}
-        >
-          <FieldGroup>
-            
-            {#if form?.error}
-              <div class="rounded-md bg-red-50 p-3 text-sm text-red-800 transition-all duration-200">
-                {form.error}
-              </div>
-            {/if}
+  <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95 border border-rose-100/50">
+    <Card.Header class="px-4 pb-2">
+      <Card.Title class="text-xl font-bold text-[#4a3050]">Register</Card.Title>
+      <Card.Description class="text-xs">Create an account to get started</Card.Description>
+    </Card.Header>
 
-            <Field>
-              <FieldLabel for="username">Username (Email)</FieldLabel>
-              <Input
-                id="username"
-                name="username"
-                type="email"
-                placeholder="user@example.com"
-                value={form?.username ?? ''}
-                required
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel for="display-name">Display Name</FieldLabel>
-              <Input
-                id="display-name"
-                name="displayName"
-                type="text"
-                placeholder="Enter your display name"
-                value={form?.displayName ?? ''}
-                required
-              />
-            </Field>
-
-            <Field>
-              <div class="flex items-center">
-                <FieldLabel for="password">Password</FieldLabel>
-              </div>
-              <div class="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  minlength={8}
-                  placeholder="At least 8 characters"
-                  class="pr-10"
-                  bind:value={password}
-                  required
-                />
-                <button
-                  type="button"
-                  onclick={togglePasswordVisibility}
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {#if showPassword}
-                    <EyeOff class="size-4" />
-                  {:else}
-                    <Eye class="size-4" />
-                  {/if}
-                </button>
-              </div>
-            </Field>
-
-            <Field>
-              <FieldLabel for="confirm-password">Confirm Password</FieldLabel>
-              <div class="relative">
-                <Input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  minlength={8}
-                  placeholder="Re-enter your password"
-                  class="pr-10"
-                  bind:value={confirmPassword}
-                  required
-                />
-                <button
-                  type="button"
-                  onclick={toggleConfirmationPasswordVisibility}
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  {#if showConfirmPassword}
-                    <EyeOff class="size-4" />
-                  {:else}
-                    <Eye class="size-4" />
-                  {/if}
-                </button>
-              </div>
-              {#if passwordsMismatch}
-                <p class="text-xs text-red-600 mt-1">Passwords do not match.</p>
-              {/if}
-            </Field>
-
-            <Field>
-              <Button type="submit" class="w-full" disabled={isSubmitting || passwordsMismatch}>
-                {isSubmitting ? 'Registering...' : 'Register'}
-              </Button>
-            </Field>
-
-            <div class="mt-1 text-center text-sm text-[#4a3050]">
-              Already have an account? 
-              <a href="/login" class="font-semibold text-[#d4af37] hover:underline">
-                Login here
-              </a>
+    <Card.Content class="px-4 pt-1">
+      <form 
+        method="POST" 
+        action="?/register" 
+        use:enhance={() => {
+          isSubmitting = true;
+          return async ({ update }) => {
+            isSubmitting = false;
+            await update({ reset: false });
+          };
+        }}
+      >
+        <FieldGroup class="gap-2.5">
+          
+          {#if form?.error}
+            <div class="rounded-md bg-red-50 p-3 text-xs text-red-800">
+              {form.error}
             </div>
+          {/if}
 
-          </FieldGroup>
-        </form>
-      </Card.Content>
-    </Card.Root>
-  </div>
+          <Field>
+            <FieldLabel for="username">Username</FieldLabel>
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="Unique username"
+              value={form?.username ?? ''}
+              class="h-8.5 text-xs px-2.5"
+              required
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel for="display-name">Display Name</FieldLabel>
+            <Input
+              id="display-name"
+              name="displayName"
+              type="text"
+              placeholder="Your display name"
+              value={form?.displayName ?? ''}
+              class="h-8.5 text-xs px-2.5"
+              required
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel for="password">Password</FieldLabel>
+            <div class="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                minlength={8}
+                placeholder="At least 8 characters"
+                class="h-8.5 text-xs pl-2.5 pr-8"
+                bind:value={password}
+                required
+              />
+              <button
+                type="button"
+                onclick={togglePasswordVisibility}
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {#if showPassword}
+                  <EyeOff class="size-3.5" />
+                {:else}
+                  <Eye class="size-3.5" />
+                {/if}
+              </button>
+            </div>
+          </Field>
+
+          <Field>
+            <FieldLabel for="confirm-password">Confirm Password</FieldLabel>
+            <div class="relative">
+              <Input
+                id="confirm-password"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                minlength={8}
+                placeholder="Re-enter your password"
+                class="h-8.5 text-xs pl-2.5 pr-8 {passwordsMismatch ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
+                bind:value={confirmPassword}
+                required
+              />
+              <button
+                type="button"
+                onclick={toggleConfirmationPasswordVisibility}
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {#if showConfirmPassword}
+                  <EyeOff class="size-3.5" />
+                {:else}
+                  <Eye class="size-3.5" />
+                {/if}
+              </button>
+            </div>
+            {#if passwordsMismatch}
+              <p class="text-[11px] text-rose-600 font-medium mt-0.5">Passwords do not match.</p>
+            {/if}
+          </Field>
+
+          <Field class="mt-1">
+            <Button type="submit" class="w-full h-8.5" disabled={isSubmitting || passwordsMismatch}>
+              {isSubmitting ? 'Registering...' : 'Register'}
+            </Button>
+          </Field>
+
+          <div class="text-center text-sm text-[#4a3050]">
+            Already have an account? 
+            <a href="/login" class="font-semibold text-[#d4af37] hover:underline">
+              Login here
+            </a>
+          </div>
+
+        </FieldGroup>
+      </form>
+    </Card.Content>
+  </Card.Root>
 </div>

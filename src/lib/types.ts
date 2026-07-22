@@ -53,6 +53,7 @@ export interface FriendResponse {
 	id?: number;
 	username?: string;
 	displayName?: string;
+	profilePictureUrl?: string | null;
 }
 
 export interface PendingResponse {
@@ -214,4 +215,5 @@ export interface UserSearchResultDto {
 	username: string;
 	displayName?: string;
 	status: RelationshipStatus;
+	requestId?: number | null;
 }

@@ -1,4 +1,4 @@
-import { friendAPI, APIError, userAPI } from '$lib/services/api.server';
+import { friendAPI, APIError, userAPI, postAPI } from '$lib/services/api.server';
 import { getNotificationItems } from '$lib/server/notifications';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
@@ -44,6 +44,23 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (error) {
 			return fail(400, { error: error instanceof Error ? error.message : 'Failed to respond' });
+		}
+	},
+
+	deleteComment: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+		
+		const data = await request.formData();
+		const commentId = Number(data.get('commentId'));
+		try {
+			const success = await postAPI.deleteComment(token, commentId);
+			if (!success) return fail(404, { error: 'Comment not found.' });
+			return { success: true };
+		} catch (error) {
+			return fail(403, {
+				error: error instanceof Error ? error.message : 'Could not delete this comment.'
+			});
 		}
 	}
 };

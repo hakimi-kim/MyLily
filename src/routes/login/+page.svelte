@@ -22,9 +22,10 @@
   <div class="flex min-h-screen w-full items-center justify-center px-4 bg-[#fdf6f9]/60 backdrop-blur-sm">
     <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95">
       <Card.Header>
-        <Card.Title class="text-2xl">Login</Card.Title>
-        <Card.Description>Enter your username below to login to your account</Card.Description>
+        <Card.Title class="text-xl font-bold text-[#4a3050]">Login</Card.Title>
+        <Card.Description class="text-xs">Enter your username below to login to your account</Card.Description>
       </Card.Header>
+      
       <Card.Content>
         <form 
           method="POST" 

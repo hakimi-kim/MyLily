@@ -121,6 +121,14 @@ export const userAPI = {
 		});
 	},
 
+	updateDisplayName: async (token: string, displayName: string) => {
+		return fetchAPI('/Users/me/display-name', {
+			method: 'PUT',
+			headers: { Authorization: `Bearer ${token}` },
+			body: JSON.stringify({ displayName })
+		});
+	},
+
 	updateWishVisibility: async (token: string, visible: boolean) => {
 		return fetchAPI(`/Users/me/wish-visibility?visible=${visible}`, {
 			method: 'PUT',
@@ -159,6 +167,13 @@ export const friendAPI = {
 	createResponse: async (token: string, requestId: number, isAccept: boolean) => {
 		return fetchAPI<RespondResponse>(`/Friends/respond/${requestId}?accept=${isAccept}`, {
 			method: 'POST',
+			headers: { Authorization: `Bearer ${token}` }
+		});
+	},
+
+	removeFriend: async (token: string, friendId: number) => {
+		return fetchAPI<null>(`/Friends/${friendId}`, {
+			method: 'DELETE',
 			headers: { Authorization: `Bearer ${token}` }
 		});
 	},

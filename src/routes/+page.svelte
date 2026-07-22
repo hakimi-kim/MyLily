@@ -160,12 +160,20 @@
             >
               <div class="flex items-center justify-between py-4 px-5">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300">
-                    <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-[1.1rem]">
-                      {post.author?.displayName?.charAt(0).toUpperCase() ??
-                        post.author?.username?.charAt(0).toUpperCase() ??
-                        'U'}
-                    </div>
+                  <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
+                    {#if post.author?.profilePictureUrl}
+                      <img
+                        src={post.author.profilePictureUrl}
+                        alt={post.author?.displayName ?? post.author?.username ?? 'User avatar'}
+                        class="w-full h-full rounded-full object-cover border-2 border-white"
+                      />
+                    {:else}
+                      <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-[1.1rem]">
+                        {post.author?.displayName?.charAt(0).toUpperCase() ??
+                          post.author?.username?.charAt(0).toUpperCase() ??
+                          'U'}
+                      </div>
+                    {/if}
                   </div>
                   <div class="flex flex-col">
                     <span class="font-semibold text-sm text-[#4a3050]">{post.author?.displayName ?? post.author?.username ?? 'Unknown'}</span>
@@ -265,7 +273,17 @@
             {#each friends as friend (friend.id)}
               <li class="flex items-center gap-3 p-2 rounded-2xl transition-colors hover:bg-white">
                 <div class="w-10 h-10 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
-                  <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-sm">{friend.displayName?.charAt(0).toUpperCase()}</div>
+                  {#if friend.profilePictureUrl}
+                    <img
+                      src={friend.profilePictureUrl}
+                      alt={friend.displayName}
+                      class="w-full h-full rounded-full object-cover border-2 border-white"
+                    />
+                  {:else}
+                    <div class="w-full h-full rounded-full bg-pink-300 flex items-center justify-center text-white font-bold border-2 border-white text-sm">
+                      {friend.displayName?.charAt(0).toUpperCase()}
+                    </div>
+                  {/if}
                 </div>
                 <span class="flex-1 text-sm font-semibold text-[#4a3050] whitespace-nowrap overflow-hidden text-ellipsis">{friend.displayName}</span>
                 <a
@@ -353,7 +371,7 @@
           <div class="text-center text-muted-foreground text-sm py-8">Loading comments…</div>
         {:else}
           {#each activeComments as comment (comment.id)}
-            <div class="flex gap-3 group items-start">
+            <div class="flex gap-3 items-start">
               <div class="w-8 h-8 rounded-full bg-linear-to-br from-brand-pink to-brand-amber p-[1.5px] shrink-0">
                 <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-xs overflow-hidden">
                   {#if comment.author?.profilePictureUrl}
@@ -369,21 +387,23 @@
                   {comment.author?.displayName ?? comment.author?.username ?? 'User'}
                 </span>
                 <span class="text-[#4a3050]">{comment.content}</span>
-                <div class="text-xs text-muted-foreground mt-1">{formatTime(comment.createdAt)}</div>
-              </div>
+                
+                <!-- Action Row: Time + Delete Button -->
+                <div class="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <span>{formatTime(comment.createdAt)}</span>
 
-              {#if data.me && (comment.author?.id === data.me.id || activeCommentPost.author?.id === data.me.id)}
-                <button
-                  type="button"
-                  aria-label="Delete comment"
-                  onclick={() => confirmDelete(comment.id)}
-                  class="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-red-500 bg-transparent border-none cursor-pointer rounded-full"
-                >
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                  </svg>
-                </button>
-              {/if}
+                  {#if data.me && (comment.author?.id === data.me.id || activeCommentPost?.author?.id === data.me.id)}
+                    <span class="text-neutral-300">•</span>
+                    <button
+                      type="button"
+                      onclick={() => confirmDelete(comment.id)}
+                      class="text-xs font-medium text-rose-500 hover:text-rose-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  {/if}
+                </div>
+              </div>
             </div>
           {:else}
             <div class="text-center text-muted-foreground text-sm py-8">
