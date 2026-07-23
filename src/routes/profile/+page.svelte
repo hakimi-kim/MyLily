@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { enhance } from '$app/forms';
+	import { LogOut } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -66,8 +67,14 @@
     <div class="flex justify-between mb-5">
       <button class="bg-none border-none text-muted-foreground cursor-pointer text-sm p-2 hover:underline" onclick={() => history.back()}>← Back</button>
 
-      <form method="POST" action="?/logout">
-        <button type="submit" class="bg-none border-none text-destructive cursor-pointer text-sm p-2 hover:underline">Logout</button>
+      <form method="POST" action="?/logout" class="flex items-center">
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+        >
+          <LogOut class="size-4" />
+          <span>Logout</span>
+        </button>
       </form>
     </div>
 

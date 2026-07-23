@@ -1,14 +1,11 @@
-import { authAPI, APIError } from '$lib/services/api.server';
+import { authAPI } from '$lib/services/api.server';
 import { redirect, fail, isRedirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { dev } from '$app/environment';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export const load: PageServerLoad = async ({ cookies }) => {
 	const token = cookies.get('token');
 	if (token) throw redirect(303, '/');
-
 	return {};
 };
 
@@ -18,17 +15,17 @@ export const actions: Actions = {
 		const username = (data.get('username') as string)?.trim();
 		const password = data.get('password') as string;
 
-		if (!username || !password) {
+		if (!username) {
 			return fail(400, {
 				username,
-				error: 'Username and password are required.'
+				errors: { username: 'Username is required.', password: '', form: '' }
 			});
 		}
 
-		if (!EMAIL_REGEX.test(username)) {
+		if (!password) {
 			return fail(400, {
 				username,
-				error: 'Username must be a valid email address.'
+				errors: { username: '', password: 'Password is required.', form: '' }
 			});
 		}
 
@@ -39,7 +36,7 @@ export const actions: Actions = {
 				path: '/',
 				httpOnly: true,
 				secure: !dev,
-				maxAge: 60 * 60 * 24 * 3, // 3 days
+				maxAge: 60 * 60 * 24 * 3,
 				sameSite: 'lax'
 			});
 
@@ -47,16 +44,9 @@ export const actions: Actions = {
 		} catch (error) {
 			if (isRedirect(error)) throw error;
 
-			if (error instanceof APIError) {
-				return fail(error.status || 400, {
-					username,
-					error: error.message
-				});
-			}
-
-			return fail(500, {
+			return fail(401, {
 				username,
-				error: 'An unexpected error occurred during login.'
+				errors: { username: '', password: '', form: 'Incorrect username or password.' }
 			});
 		}
 	}

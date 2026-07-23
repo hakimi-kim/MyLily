@@ -1,3 +1,14 @@
+export type FormErrors = {
+	username?: string;
+	displayName?: string;
+	errors: {
+		username?: string;
+		password?: string;
+		confirmPassword?: string;
+		form?: string;
+	};
+};
+
 export interface LoginRequest {
 	username: string;
 	password: string;

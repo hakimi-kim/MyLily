@@ -5,8 +5,9 @@
   import { FieldGroup, Field, FieldLabel } from '$lib/components/ui/field/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Button } from "$lib/components/ui/button/index.js";
+	import type { ActionData } from './$types';
 
-  let { form } = $props();
+  let { form }: { form: ActionData } = $props();
 
   let showPassword = $state(false);
   let isSubmitting = $state(false);
@@ -16,20 +17,18 @@
   }
 </script>
 
-<div 
-  class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat" 
->
+<div class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat">
   <div class="flex min-h-screen w-full items-center justify-center px-4 bg-[#fdf6f9]/60 backdrop-blur-sm">
     <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95">
       <Card.Header>
         <Card.Title class="text-xl font-bold text-[#4a3050]">Login</Card.Title>
         <Card.Description class="text-xs">Enter your username below to login to your account</Card.Description>
       </Card.Header>
-      
+
       <Card.Content>
-        <form 
-          method="POST" 
-          action="?/login" 
+        <form
+          method="POST"
+          action="?/login"
           use:enhance={() => {
             isSubmitting = true;
             return async ({ update }) => {
@@ -39,10 +38,10 @@
           }}
         >
           <FieldGroup>
-            
-            {#if form?.error}
+
+            {#if form?.errors?.form}
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {form.error}
+                {form.errors.form}
               </div>
             {/if}
 
@@ -53,22 +52,22 @@
                 name="username"
                 type="text"
                 placeholder="Enter your username"
-                value={form?.username || ''}
-                required
+                value={form?.username ?? ''}
+                class={form?.errors?.username ? 'border-rose-500 focus-visible:ring-rose-500' : ''}
               />
+              {#if form?.errors?.username}
+                <p class="text-[11px] text-rose-600 font-medium mt-0.5">{form.errors.username}</p>
+              {/if}
             </Field>
 
             <Field>
-              <div class="flex items-center">
-                <FieldLabel for="password">Password</FieldLabel>
-              </div>
+              <FieldLabel for="password">Password</FieldLabel>
               <div class="relative">
                 <Input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  class="pr-10"
-                  required
+                  class="pr-10 {form?.errors?.password ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
                 />
                 <button
                   type="button"
@@ -83,6 +82,9 @@
                   {/if}
                 </button>
               </div>
+              {#if form?.errors?.password}
+                <p class="text-[11px] text-rose-600 font-medium mt-0.5">{form.errors.password}</p>
+              {/if}
             </Field>
 
             <Field>
@@ -92,7 +94,7 @@
             </Field>
 
             <div class="mt-4 text-center text-sm text-[#4a3050]">
-              Don't have an account? 
+              Don't have an account?
               <a href="/register" class="font-semibold text-[#d4af37] hover:underline">
                 Register here
               </a>
