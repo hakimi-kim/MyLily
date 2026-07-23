@@ -113,6 +113,14 @@ export const userAPI = {
 		});
 	},
 
+	updatePassword: async (token: string, currentPassword: string, newPassword: string) => {
+		return fetchAPI('/Users/me/password', {
+			method: 'PUT',
+			headers: { Authorization: `Bearer ${token}` },
+			body: JSON.stringify({ currentPassword, newPassword })
+		});
+	},
+
 	updateProfilePicture: async (token: string, formData: FormData) => {
 		return fetchAPI<UserSummaryDto>('/Users/me/profile-picture', {
 			method: 'PUT',

@@ -282,7 +282,10 @@
                     </div>
                   {/if}
                 </div>
-                <span class="flex-1 text-sm font-semibold text-[#4a3050] whitespace-nowrap overflow-hidden text-ellipsis">{friend.displayName}</span>
+                <div class="flex-1 min-w-0">
+                  <span class="flex-1 text-sm font-semibold text-[#4a3050] whitespace-nowrap overflow-hidden text-ellipsis">{friend.displayName}</span>
+                  <p class="text-xs text-muted-foreground">@{friend.username}</p>
+                </div>
                 <a
                   href="/garden/{friend.id}"
                   aria-label={`Visit ${friend.displayName}'s garden`}

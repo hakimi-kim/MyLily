@@ -71,6 +71,37 @@ export const actions: Actions = {
 		}
 	},
 
+	updatePassword: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const formData = await request.formData();
+		const currentPassword = formData.get('currentPassword') as string;
+		const newPassword = formData.get('newPassword') as string;
+		const confirmNewPassword = formData.get('confirmNewPassword') as string;
+
+		if (!currentPassword || !newPassword || !confirmNewPassword) {
+			return fail(400, { passwordError: 'All fields are required.' });
+		}
+
+		if (newPassword.length < 8) {
+			return fail(400, { passwordError: 'New password must be at least 8 characters.' });
+		}
+
+		if (newPassword !== confirmNewPassword) {
+			return fail(400, { passwordError: 'New passwords do not match.' });
+		}
+
+		try {
+			await userAPI.updatePassword(token, currentPassword, newPassword);
+			return { passwordSuccess: true };
+		} catch (error) {
+			return fail(400, {
+				passwordError: error instanceof Error ? error.message : 'Failed to update password.'
+			});
+		}
+	},
+
 	updateDisplayName: async ({ request, cookies }) => {
 		const token = cookies.get('token');
 		if (!token) throw redirect(303, '/login');
