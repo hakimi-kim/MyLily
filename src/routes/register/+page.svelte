@@ -5,8 +5,9 @@
   import { FieldGroup, Field, FieldLabel } from '$lib/components/ui/field/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Button } from "$lib/components/ui/button/index.js";
+	import type { ActionData } from './$types';
 
-  let { form } = $props();
+  let { form }: { form: ActionData } = $props();
 
   let showPassword = $state(false);
   let showConfirmPassword = $state(false);
@@ -27,8 +28,8 @@
   }
 </script>
 
-<div 
-  class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat flex items-center justify-center p-4 bg-[#fdf6f9]/60 backdrop-blur-sm" 
+<div
+  class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat flex items-center justify-center p-4 bg-[#fdf6f9]/60 backdrop-blur-sm"
   style="background-image: url('C:\\Users\\VICTUS\\Coding\\personal\\Lily\\MyLilyFrontend\\src\\lib\\assets\\lillies.jpg');"
 >
   <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95 border border-rose-100/50">
@@ -38,9 +39,9 @@
     </Card.Header>
 
     <Card.Content class="px-4 pt-1">
-      <form 
-        method="POST" 
-        action="?/register" 
+      <form
+        method="POST"
+        action="?/register"
         use:enhance={() => {
           isSubmitting = true;
           return async ({ update }) => {
@@ -50,10 +51,10 @@
         }}
       >
         <FieldGroup class="gap-2.5">
-          
-          {#if form?.error}
+
+          {#if form?.errors?.form}
             <div class="rounded-md bg-red-50 p-3 text-xs text-red-800">
-              {form.error}
+              {form.errors.form}
             </div>
           {/if}
 
@@ -65,9 +66,11 @@
               type="text"
               placeholder="Unique username"
               value={form?.username ?? ''}
-              class="h-8.5 text-xs px-2.5"
-              required
+              class="h-8.5 text-xs px-2.5 {form?.errors?.username ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
             />
+            {#if form?.errors?.username}
+              <p class="text-[11px] text-rose-600 font-medium mt-0.5">{form.errors.username}</p>
+            {/if}
           </Field>
 
           <Field>
@@ -79,7 +82,6 @@
               placeholder="Your display name"
               value={form?.displayName ?? ''}
               class="h-8.5 text-xs px-2.5"
-              required
             />
           </Field>
 
@@ -90,11 +92,9 @@
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                minlength={8}
                 placeholder="At least 8 characters"
-                class="h-8.5 text-xs pl-2.5 pr-8"
+                class="h-8.5 text-xs pl-2.5 pr-8 {form?.errors?.password ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
                 bind:value={password}
-                required
               />
               <button
                 type="button"
@@ -109,6 +109,9 @@
                 {/if}
               </button>
             </div>
+            {#if form?.errors?.password}
+              <p class="text-[11px] text-rose-600 font-medium mt-0.5">{form.errors.password}</p>
+            {/if}
           </Field>
 
           <Field>
@@ -118,11 +121,9 @@
                 id="confirm-password"
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
-                minlength={8}
                 placeholder="Re-enter your password"
-                class="h-8.5 text-xs pl-2.5 pr-8 {passwordsMismatch ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
+                class="h-8.5 text-xs pl-2.5 pr-8 {passwordsMismatch || form?.errors?.confirmPassword ? 'border-rose-500 focus-visible:ring-rose-500' : ''}"
                 bind:value={confirmPassword}
-                required
               />
               <button
                 type="button"
@@ -139,6 +140,8 @@
             </div>
             {#if passwordsMismatch}
               <p class="text-[11px] text-rose-600 font-medium mt-0.5">Passwords do not match.</p>
+            {:else if form?.errors?.confirmPassword}
+              <p class="text-[11px] text-rose-600 font-medium mt-0.5">{form.errors.confirmPassword}</p>
             {/if}
           </Field>
 
@@ -149,7 +152,7 @@
           </Field>
 
           <div class="text-center text-sm text-[#4a3050]">
-            Already have an account? 
+            Already have an account?
             <a href="/login" class="font-semibold text-[#d4af37] hover:underline">
               Login here
             </a>
