@@ -69,8 +69,15 @@
                     Your wish <span class="italic">"{item.snippet}"</span> has bloomed!
                   {:else if item.type === 'FriendRequestReceived'}
                     <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> wants to connect
+
+                  <!-- Sent to Requester -->
+                  {:else if item.type === 'FriendRequestAcceptedByReceiver'}
+                    <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> accepted your friend request. You're now friends with <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> 🌸
+
+                  <!-- Sent to Receiver -->
                   {:else if item.type === 'FriendRequestAccepted'}
                     You're now friends with <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> 🌸
+
                   {:else if item.type === 'FriendRequestDeclined'}
                     You declined <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span>'s request
                   {:else if item.type === 'Like'}

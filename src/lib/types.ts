@@ -235,6 +235,7 @@ export interface NotificationDto {
 	type:
 		| 'FriendRequestReceived'
 		| 'FriendRequestAccepted'
+		| 'FriendRequestAcceptedByReceiver'
 		| 'FriendRequestDeclined'
 		| 'Like'
 		| 'Comment'
