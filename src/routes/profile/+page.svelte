@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 	import { enhance } from '$app/forms';
 	import { LogOut } from 'lucide-svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let preview = $state<string | null>(null);
 	let fileInput = $state<HTMLInputElement | null>(null);
@@ -12,6 +12,12 @@
 	let editNameOpen = $state(false);
 	let newDisplayName = $state('');
 	let updatingName = $state(false);
+
+  let editPasswordOpen = $state(false);
+  let updatingPassword = $state(false);
+
+  function openEditPassword() { editPasswordOpen = true; }
+  function closeEditPassword() { if (updatingPassword) return; editPasswordOpen = false; }
 
 	function handleFileChange(e: Event) {
 		const input = e.target as HTMLInputElement;
@@ -166,13 +172,23 @@
         </h2>
         <span class="text-xs sm:text-sm text-muted-foreground">@{data.me.username}</span>
 
-        <button
-          type="button"
-          onclick={openEditName}
-          class="w-full sm:w-fit text-center text-xs px-4 py-2 mt-2 rounded-xl bg-neutral-200/60 text-[#6b5b6b] font-semibold hover:bg-pink-50 hover:text-[#4a3050] transition-colors cursor-pointer"
-        >
-          Update Name
-        </button>
+        <div class="flex flex-wrap items-center gap-2 mt-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onclick={openEditName}
+            class="flex-1 sm:flex-none text-center text-xs px-4 py-2 rounded-xl bg-neutral-200/60 text-[#6b5b6b] font-semibold hover:bg-pink-50 hover:text-[#4a3050] transition-colors cursor-pointer"
+          >
+            Update Name
+          </button>
+
+          <button
+            type="button"
+            onclick={openEditPassword}
+            class="flex-1 sm:flex-none text-center text-xs px-4 py-2 rounded-xl bg-neutral-200/60 text-[#6b5b6b] font-semibold hover:bg-pink-50 hover:text-[#4a3050] transition-colors cursor-pointer"
+          >
+            Change Password
+          </button>
+        </div>
       </div>
     </div>
 
@@ -255,6 +271,85 @@
             class="flex-1 py-2 px-4 rounded-xl bg-[#65a0a0] text-white text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50"
           >
             {updatingName ? 'Submitting…' : 'Submit'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}
+
+{#if editPasswordOpen}
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs z-1100 flex items-center justify-center p-4"
+    onclick={closeEditPassword}
+    onkeydown={(e) => e.key === 'Escape' && closeEditPassword()}
+    role="presentation"
+  >
+    <div
+      class="bg-white w-full max-w-80 rounded-2xl p-6 shadow-xl flex flex-col gap-4"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+    >
+      <h4 class="text-base font-semibold text-[#4a3050]">Change password</h4>
+
+      {#if form?.passwordError}
+        <p class="text-xs text-rose-600 font-medium">{form.passwordError}</p>
+      {/if}
+
+      <form
+        method="POST"
+        action="?/updatePassword"
+        use:enhance={() => {
+          updatingPassword = true;
+          return async ({ result, update }) => {
+            updatingPassword = false;
+            if (result.type === 'success') editPasswordOpen = false;
+            await update({ reset: false });
+          };
+        }}
+        class="flex flex-col gap-3"
+      >
+        <input
+          type="password"
+          name="currentPassword"
+          required
+          placeholder="Current password"
+          class="text-sm px-3 py-2 rounded-xl bg-neutral-50 border border-neutral-200 outline-none focus:border-pink-300"
+        />
+        <input
+          type="password"
+          name="newPassword"
+          required
+          minlength={8}
+          placeholder="New password (min 8 chars)"
+          class="text-sm px-3 py-2 rounded-xl bg-neutral-50 border border-neutral-200 outline-none focus:border-pink-300"
+        />
+        <input
+          type="password"
+          name="confirmNewPassword"
+          required
+          placeholder="Confirm new password"
+          class="text-sm px-3 py-2 rounded-xl bg-neutral-50 border border-neutral-200 outline-none focus:border-pink-300"
+        />
+
+        <div class="flex gap-3">
+          <button
+            type="button"
+            onclick={closeEditPassword}
+            disabled={updatingPassword}
+            class="flex-1 py-2 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={updatingPassword}
+            class="flex-1 py-2 px-4 rounded-xl bg-[#65a0a0] text-white text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {updatingPassword ? 'Saving…' : 'Save'}
           </button>
         </div>
       </form>

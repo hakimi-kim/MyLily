@@ -143,7 +143,10 @@
                       </div>
                     {/if}
                   </div>
-                  <span class="flex-1 text-sm font-semibold text-[#4a3050]">{friend.displayName}</span>
+                  <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-[#4a3050]">{friend.displayName}</p>
+                    <p class="text-xs text-muted-foreground">@{friend.username}</p>
+                  </div>
                   <a href="/garden/{friend.id}">
                     <button class="px-3 py-1.5 rounded-full bg-neutral-100 text-[#6b5b6b] text-xs font-semibold cursor-pointer hover:bg-amber-50 hover:text-amber-500">
                       Visit garden
