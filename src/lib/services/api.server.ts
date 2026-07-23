@@ -6,7 +6,6 @@ import type {
 	CreateLilyDto,
 	FeedDto,
 	FeedResponse,
-	FriendResponse,
 	GardenVisitResponse,
 	LetterDto,
 	LikeDto,
@@ -14,6 +13,7 @@ import type {
 	LilyProgressUpdateDto,
 	LoginRequest,
 	LoginResponse,
+	NotificationDto,
 	PendingResponse,
 	PublicLilyDto,
 	RegisterRequest,
@@ -146,7 +146,7 @@ export const userAPI = {
 
 export const friendAPI = {
 	getAll: async (token: string) => {
-		return fetchAPI<FriendResponse[]>('/Friends', {
+		return fetchAPI<UserSummaryDto[]>('/Friends', {
 			headers: { Authorization: `Bearer ${token}` }
 		});
 	},
@@ -292,7 +292,6 @@ export const postAPI = {
 		});
 	},
 
-	
 	getLikes: async (token: string, postId: number) => {
 		return fetchAPI<LikeDto[]>(`/Posts/${postId}/likes`, {
 			headers: { Authorization: `Bearer ${token}` }
@@ -332,8 +331,7 @@ export const postAPI = {
 			method: 'DELETE',
 			headers: { Authorization: `Bearer ${token}` }
 		});
-	},
-
+	}
 };
 
 export const letterAPI = {
@@ -361,6 +359,20 @@ export const letterAPI = {
 
 	delete: async (token: string, id: number) => {
 		return fetchAPI<null>(`/Letters/${id}`, {
+			method: 'DELETE',
+			headers: { Authorization: `Bearer ${token}` }
+		});
+	}
+};
+
+export const notificationAPI = {
+	getAll: async (token: string) => {
+		return fetchAPI<NotificationDto[]>('/Notifications', {
+			headers: { Authorization: `Bearer ${token}` }
+		});
+	},
+	delete: async (token: string, id: number) => {
+		return fetchAPI<null>(`/Notifications/${id}`, {
 			method: 'DELETE',
 			headers: { Authorization: `Bearer ${token}` }
 		});

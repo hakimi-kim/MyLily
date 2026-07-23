@@ -1,13 +1,10 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import type { CommentDto, FeedDto, FriendResponse } from '$lib/types';
+  import type { CommentDto, FeedDto, UserSummaryDto } from '$lib/types';
   import type { PageData } from './$types';
-  import lilyLogo from '$lib/assets/lily.png';
   import { applyAction } from '$app/forms';
   import type { SubmitFunction } from '@sveltejs/kit';
-  import { page } from '$app/state';
   import { untrack } from 'svelte';
-  import { invalidateAll } from '$app/navigation';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
   let { data }: { data: PageData } = $props();
@@ -15,7 +12,7 @@
   let posts = $state<FeedDto[]>(untrack(() => data.feeds ?? []));
   let nextCursor = $state(untrack(() => data.nextCursor));
   let hasMore = $state(untrack(() => data.hasMore ?? false));
-  let friends = $state<FriendResponse[]>(untrack(() => data.friends ?? []));
+  let friends = $state<UserSummaryDto[]>(untrack(() => data.friends ?? []));
 
   let activeCommentPost = $state<FeedDto | null>(null);
   let commentText = $state('');

@@ -49,12 +49,12 @@ export interface FeedDto {
 	likedByMe?: boolean;
 }
 
-export interface FriendResponse {
-	id?: number;
-	username?: string;
-	displayName?: string;
-	profilePictureUrl?: string | null;
-}
+// export interface FriendResponse {
+// 	id?: number;
+// 	username?: string;
+// 	displayName?: string;
+// 	profilePictureUrl?: string | null;
+// }
 
 export interface PendingResponse {
 	id?: number;
@@ -216,4 +216,24 @@ export interface UserSearchResultDto {
 	displayName?: string;
 	status: RelationshipStatus;
 	requestId?: number | null;
+	profilePictureUrl?: string | null;
+}
+
+export interface NotificationDto {
+	id: number;
+	type:
+		| 'FriendRequestReceived'
+		| 'FriendRequestAccepted'
+		| 'FriendRequestDeclined'
+		| 'Like'
+		| 'Comment'
+		| 'LilyConfirmation'
+		| 'LilyBloomed';
+	actor?: UserSummaryDto | null;
+	relatedFriendRequestId?: number | null;
+	relatedPostId?: number | null;
+	relatedCommentId?: number | null;
+	relatedLilyId?: number | null;
+	snippet?: string | null;
+	createdAt: string;
 }

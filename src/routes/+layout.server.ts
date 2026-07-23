@@ -1,5 +1,4 @@
-import { getNotificationItems } from '$lib/server/notifications';
-import { userAPI } from '$lib/services/api.server';
+import { notificationAPI, userAPI } from '$lib/services/api.server';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, depends }) => {
@@ -9,13 +8,18 @@ export const load: LayoutServerLoad = async ({ cookies, depends }) => {
 	if (!token) return { hasNotifications: false };
 
 	try {
-		const [items, me] = await Promise.all([getNotificationItems(token), userAPI.getMe(token)]);
+		const [notifications, me] = await Promise.all([
+			notificationAPI.getAll(token),
+			userAPI.getMe(token)
+		]);
 
 		const lastViewed = me.lastNotificationsViewedAt
 			? new Date(me.lastNotificationsViewedAt).getTime()
 			: 0;
 
-		const hasNotifications = items.some((item) => new Date(item.createdAt).getTime() > lastViewed);
+		const hasNotifications = notifications.some(
+			(item) => new Date(item.createdAt).getTime() > lastViewed
+		);
 
 		return { hasNotifications };
 	} catch {
