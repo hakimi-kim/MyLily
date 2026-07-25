@@ -15,6 +15,11 @@
   let addOpen = $state(false);
   let showExtend = $state(false);
 
+  let extendDateRaw = $state('');
+  let extendDateUtc = $derived(
+    extendDateRaw ? new Date(`${extendDateRaw}T00:00:00`).toISOString() : ''
+  );
+
   const dateLabel = $derived(new Date(lily.plantedAt).toLocaleDateString(undefined, {
     month: "long",
     day: "numeric",
@@ -134,12 +139,13 @@
 
           {#if showExtend}
             <form method="POST" action="?/extend" use:enhance class="flex items-center gap-1.5 pt-1">
-              <input 
-                type="date" 
-                name="newTargetDate" 
-                required 
-                class="bg-card border border-border rounded-sm px-2.5 py-1.5 text-xs text-ink font-sans outline-none focus:ring-2 focus:ring-sage" 
+              <input
+                type="date"
+                bind:value={extendDateRaw}
+                required
+                class="bg-card border border-border rounded-sm px-2.5 py-1.5 text-xs text-ink font-sans outline-none focus:ring-2 focus:ring-sage"
               />
+              <input type="hidden" name="newTargetDate" value={extendDateUtc} />
               <button type="submit" class="px-3 py-1.5 rounded-full bg-ink text-parchment hover:bg-ink/85 text-xs font-medium transition-colors font-sans">
                 Extend
               </button>

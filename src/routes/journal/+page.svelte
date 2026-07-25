@@ -143,6 +143,24 @@
       }
     }, 50);
   }
+
+  function handleBackdropClick() {
+    if (!openForm) {
+      editing = null;
+      viewing = null;
+      searchQuery = "";
+      isConfirmingRemove = false;
+    }
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && !openForm) {
+      editing = null; 
+      viewing = null; 
+      searchQuery = ""; 
+      isConfirmingRemove = false;
+    }
+  }
 </script>
 
 <style>
@@ -231,17 +249,11 @@
 
 {#if openForm || editing || viewing}
   <div 
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/15 backdrop-blur-xs p-4" 
-      onclick={() => { openForm = false; editing = null; viewing = null; searchQuery = ""; isConfirmingRemove = false; }} 
-      onkeydown={(e) => {
-        if (e.key === 'Escape') {
-          openForm = false; editing = null; viewing = null; searchQuery = ""; isConfirmingRemove = false;
-        }
-      }}
-      role="button"
-      tabindex="-1"
-      aria-label="Close dialog overlay"
-    >
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/15 backdrop-blur-xs p-4" 
+    onclick={handleBackdropClick} 
+    onkeydown={handleKeydown}
+    role="presentation"
+  >
     <div 
       onclick={(e) => e.stopPropagation()} 
       onkeydown={(e) => e.stopPropagation()}
@@ -255,7 +267,6 @@
         <h2 class="font-serif text-lg text-ink mb-2">Plant a memory</h2>
         <form method="POST" action="?/plant" use:enhance={handleFormResult} class="space-y-3 text-xs">
           
-        <!-- Searchable Friend Dropdown / Combobox -->
         <div>
           <label for="friend-search" class="block text-[10px] uppercase text-sepia/70 mb-0.5">Write to</label>
           <div class="relative">
@@ -313,7 +324,7 @@
         </div>
 
           {#if recipientId && searchQuery !== ""}
-            <p class="text-[10px] italic text-[oklch(0.55_0.08_25)] -mt-1 leading-tight">
+            <p class="text-[10px] text-[oklch(0.55_0.08_25)] -mt-1 leading-tight">
               Once sent, this letter leaves your garden — only {data.friends.find(f => String(f.id) === recipientId)?.displayName ?? "they"} will see it.
             </p>
           {/if}
@@ -436,10 +447,6 @@
               {/if}
             </div>
           {/if}
-
     </div>
   </div>
 {/if}
-
-
-
