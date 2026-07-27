@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import lilyLogo from '$lib/assets/lily.png';
+  import { Home } from 'lucide-svelte';
 
   type Sender = { id: number; username: string; displayName?: string };
   type Friend = { id: number; username: string; displayName?: string };
@@ -192,12 +193,19 @@
 <div class="relative min-h-screen w-full pb-12">
   <div class="fixed inset-0 -z-10 bg-linear-to-br from-[oklch(0.98_0.015_85)] via-[oklch(0.96_0.02_350)] to-[oklch(0.95_0.03_25)]"></div>
 
-  <nav class="h-14 px-12 flex items-center justify-between bg-white/60 backdrop-blur-md border-b border-black/5">
+  <nav class="h-14 px-4 sm:px-6 md:px-12 flex items-center justify-between bg-white/60 backdrop-blur-md border-b border-black/5">
     <div class="flex items-center gap-1.5">
       <img src={lilyLogo} alt="Lily" class="w-5 h-5" />
       <span class="font-serif text-lg font-medium text-ink tracking-wide">Stargazerr</span>
     </div>
-    <a href="/" class="text-xs text-sepia hover:text-ink transition-colors">Home</a>
+    <a 
+      href="/" 
+      class="flex items-center gap-1.5 text-sm sm:text-xs text-sepia hover:text-ink font-medium sm:font-normal transition-colors py-1 px-2"
+      aria-label="Home"
+    >
+      <Home class="w-4 h-4 sm:hidden" />
+      <span>Home</span>
+    </a>
   </nav>
 
   <main class="max-w-4xl mx-auto px-4 pt-6">
