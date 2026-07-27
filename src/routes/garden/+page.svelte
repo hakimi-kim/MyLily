@@ -53,7 +53,7 @@
 
   let positions = $derived.by(() => {
     const map = new Map<number, { x: number; y: number }>();
-    lilies.forEach((l: LilyDto, i: number) => map.set(l.id, nextAutoPosition(i)));
+    lilies.forEach((l: LilyDto) => map.set(l.id, nextAutoPosition(l.id)));
     return map;
   });
 

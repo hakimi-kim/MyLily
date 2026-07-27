@@ -80,5 +80,23 @@ export const actions: Actions = {
 				error: error instanceof Error ? error.message : 'Could not extend this wish.'
 			});
 		}
+	},
+
+	deleteLily: async ({ params, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const lilyId = Number(params.id);
+		if (isNaN(lilyId)) return fail(400, { error: 'Invalid ID provided.' });
+
+		try {
+			await lilyAPI.delete(token, lilyId);
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Could not delete this wish.'
+			});
+		}
+
+		throw redirect(303, '/garden');
 	}
 };

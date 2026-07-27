@@ -15,6 +15,9 @@
   let addOpen = $state(false);
   let showExtend = $state(false);
 
+  let showDeleteModal = $state(false);
+  let isDeleting = $state(false);
+
   let extendDateRaw = $state('');
   let extendDateUtc = $derived(
     extendDateRaw ? new Date(`${extendDateRaw}T00:00:00`).toISOString() : ''
@@ -33,7 +36,7 @@
   <div class="max-w-[52ch] mx-auto animate-fade-up">
     <button
       onclick={() => goto('/garden')}
-      class="mb-3 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-sepia/60 hover:text-ink transition-colors font-sans"
+      class="mb-3 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-sepia/60 hover:text-ink transition-colors font-sans cursor-pointer"
     >
       <ArrowLeft class="size-3" />
       Back to the garden
@@ -102,7 +105,7 @@
         {#if lily.type === LilyType.GoalOriented && !lily.isFulfilled}
           <button
             onclick={() => (addOpen = true)}
-            class="w-full py-2.5 border border-dashed border-border rounded-sm text-xs text-sepia/60 hover:text-ink hover:border-sage/50 transition-all font-medium font-sans"
+            class="w-full py-2.5 border border-dashed border-border rounded-sm text-xs text-sepia/60 hover:text-ink hover:border-sage/50 transition-all font-medium font-sans cursor-pointer"
           >
             + Add Progress Update
           </button>
@@ -126,13 +129,13 @@
                 };
               }}
             >
-              <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans">
+              <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans cursor-pointer">
                 <Sparkles class="size-3.5 mr-1.5" />
                 Yes, it bloomed
               </button>
             </form>
 
-            <button onclick={() => (showExtend = !showExtend)} class="px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans">
+            <button onclick={() => (showExtend = !showExtend)} class="px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans cursor-pointer">
               Not yet — give it more time
             </button>
           </div>
@@ -146,7 +149,7 @@
                 class="bg-card border border-border rounded-sm px-2.5 py-1.5 text-xs text-ink font-sans outline-none focus:ring-2 focus:ring-sage"
               />
               <input type="hidden" name="newTargetDate" value={extendDateUtc} />
-              <button type="submit" class="px-3 py-1.5 rounded-full bg-ink text-parchment hover:bg-ink/85 text-xs font-medium transition-colors font-sans">
+              <button type="submit" class="px-3 py-1.5 rounded-full bg-ink text-parchment hover:bg-ink/85 text-xs font-medium transition-colors font-sans cursor-pointer">
                 Extend
               </button>
             </form>
@@ -158,16 +161,84 @@
         <p class="mt-4 pl-3 sm:pl-4 text-xs text-destructive font-sans">{form.error}</p>
       {/if}
 
-      <footer class="mt-6 pl-3 sm:pl-4 flex flex-wrap gap-1.5">
+      <footer class="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4">
         <button 
           onclick={() => goto('/garden')} 
-          class="px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans"
+          class="w-full sm:w-auto px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans text-center cursor-pointer"
         >
           Return to the garden
+        </button>
+
+        <button 
+          type="button" 
+          class="w-full sm:w-auto px-3 py-1.5 rounded-full border border-border text-muted-foreground text-xs font-semibold cursor-pointer hover:bg-red-50 hover:text-red-500 transition-colors" 
+          onclick={() => showDeleteModal = true}
+        >
+          Delete this wish
         </button>
       </footer>
     </article>
   </div>
 
   <AddProgressDialog lilyId={lily.id} bind:open={addOpen} />
+
+  {#if showDeleteModal}
+    <div 
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+    >
+      <div class="w-full max-w-xs sm:max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg space-y-4">
+        <div class="space-y-1 text-left">
+          <h3 id="delete-dialog-title" class="text-sm font-semibold text-ink font-serif">
+            Delete this wish?
+          </h3>
+          <p class="text-xs text-sepia/70 leading-relaxed font-sans">
+            This action cannot be undone. Are you sure you want to permanently remove this wish from your garden?
+          </p>
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2">
+          <button 
+            type="button"
+            disabled={isDeleting}
+            class="w-full sm:w-auto px-3 py-1.5 rounded-full border border-border text-xs font-medium text-sepia hover:bg-leaf/20 transition-colors cursor-pointer font-sans disabled:opacity-50"
+            onclick={() => showDeleteModal = false}
+          >
+            Cancel
+          </button>
+
+          <form
+            method="POST"
+            action="?/deleteLily"
+            class="w-full sm:w-auto"
+            use:enhance={() => {
+              isDeleting = true;
+              return async ({ result, update }) => {
+                isDeleting = false;
+                if (result.type === 'success' || result.type === 'redirect') {
+                  showDeleteModal = false;
+                }
+                await update();
+              };
+            }}
+          >
+            <input type="hidden" name="lilyId" value={lily.id} />
+            <button 
+              type="submit" 
+              disabled={isDeleting}
+              class="w-full sm:w-auto px-3 py-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors cursor-pointer font-sans disabled:opacity-50"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </form>
+        </div>
+
+        {#if form?.error}
+          <p class="text-red-500 text-xs text-left font-sans">{form.error}</p>
+        {/if}
+      </div>
+    </div>
+  {/if}
 </main>
