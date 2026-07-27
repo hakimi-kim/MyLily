@@ -16,8 +16,9 @@
     { href: '/profile', label: 'Profile', icon: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />` }
   ];
 
+  // Increased py-3.5 on mobile for taller tap areas and added safe area padding for modern phones
   const buttonClass =
-    'relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:gap-0.5 max-[640px]:py-1.5 max-[640px]:px-2.5 max-[640px]:rounded-xl';
+    'relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:justify-center max-[640px]:gap-1 max-[640px]:py-3.5 max-[640px]:px-2 max-[640px]:rounded-2xl max-[640px]:[&_svg]:w-6 max-[640px]:[&_svg]:h-6';
 
   function isActive(href: string) {
     const path = page.url.pathname;
@@ -26,7 +27,7 @@
   }
 </script>
 
-<!-- Mobile-only top bar: Create (left) · Stargazerr (center) · Profile (right) -->
+<!-- Mobile-only top bar -->
 <header class="hidden max-[640px]:flex fixed top-0 inset-x-0 z-100 h-14 items-center justify-between px-4 bg-white border-b border-border">
   <a
     href="/create"
@@ -51,33 +52,34 @@
   </a>
 </header>
 
-<aside class="sticky top-0 h-screen py-8 flex flex-col max-[640px]:fixed max-[640px]:bottom-0 max-[640px]:left-0 max-[640px]:right-0 max-[640px]:top-auto max-[640px]:h-auto max-[640px]:bg-white max-[640px]:border-t max-[640px]:border-border max-[640px]:z-100 max-[640px]:py-1.5">
-  <div class="flex flex-col h-full gap-1 max-[640px]:flex-row max-[640px]:items-center max-[640px]:justify-around">
+<!-- Mobile bottom bar: increased height (py-3 and pb-safe support) -->
+<aside class="sticky top-0 h-screen py-8 flex flex-col max-[640px]:fixed max-[640px]:bottom-0 max-[640px]:inset-x-0 max-[640px]:top-auto max-[640px]:h-auto max-[640px]:bg-white max-[640px]:border-t max-[640px]:border-border max-[640px]:z-100 max-[640px]:pt-3 max-[640px]:pb-5 max-[640px]:px-3">
+  <div class="flex flex-col h-full gap-1 max-[640px]:flex-row max-[640px]:items-center max-[640px]:w-full">
     <div class="flex items-center gap-2 px-3 pb-8 max-[640px]:hidden">
       <img src={lilyLogo} alt="Lily Garden Logo" class="w-8 h-8" />
       <span class="font-serif text-2xl font-medium text-[#5b3a5b] tracking-wide max-[1040px]:hidden">Stargazerr</span>
     </div>
 
-    <nav class="flex flex-col gap-1 max-[640px]:flex-row max-[640px]:gap-0">
+    <nav class="flex flex-col gap-1 max-[640px]:flex-row max-[640px]:w-full max-[640px]:justify-between max-[640px]:gap-1.5">
       {#each navItems as item (item.href)}
-        <a href={item.href}>
+        <a href={item.href} class="max-[640px]:flex-1">
           <button
             aria-label={item.label}
             class="{buttonClass} {isActive(item.href) ? 'bg-pink-100 text-[#4a3050]' : 'text-[#6b5b6b] hover:bg-pink-50'}"
           >
             {#if item.showDot && page.data.hasNotifications}
-              <span class="absolute top-2.5 left-6.5 w-2 h-2 bg-amber-400 rounded-full border-2 border-white"></span>
+              <span class="absolute top-2.5 left-1/2 -translate-x-1/2 sm:top-2.5 sm:left-6.5 w-2 h-2 bg-amber-400 rounded-full border-2 border-white"></span>
             {/if}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               {@html item.icon}
             </svg>
-            <span>{item.label}</span>
+            <span class="max-[640px]:inline-block max-[640px]:text-[0.7rem]">{item.label}</span>
           </button>
         </a>
       {/each}
     </nav>
 
-    <!-- Create/Profile moved to the mobile top bar; keep them here for desktop & tablet only -->
+    <!-- Desktop & Tablet only -->
     <div class="mt-auto flex flex-col gap-1 pb-3 max-[640px]:hidden">
       {#each bottomItems as item (item.href)}
         <a href={item.href}>
