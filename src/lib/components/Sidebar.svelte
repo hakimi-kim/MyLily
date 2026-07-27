@@ -16,7 +16,6 @@
     { href: '/profile', label: 'Profile', icon: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />` }
   ];
 
-  // Increased py-3.5 on mobile for taller tap areas and added safe area padding for modern phones
   const buttonClass =
     'relative flex items-center gap-3.5 border-none cursor-pointer py-3 px-3.5 rounded-2xl font-semibold text-[0.95rem] transition-colors w-full text-left [&_svg]:w-5 [&_svg]:h-5 [&_svg]:shrink-0 max-[1040px]:justify-center max-[1040px]:px-3 max-[1040px]:[&_span]:hidden max-[640px]:flex-col max-[640px]:justify-center max-[640px]:gap-1 max-[640px]:py-3.5 max-[640px]:px-2 max-[640px]:rounded-2xl max-[640px]:[&_svg]:w-6 max-[640px]:[&_svg]:h-6';
 
@@ -27,24 +26,27 @@
   }
 </script>
 
-<!-- Mobile-only top bar -->
-<header class="hidden max-[640px]:flex fixed top-0 inset-x-0 z-100 h-14 items-center justify-between px-4 bg-white border-b border-border">
+<!-- Mobile-only top bar: mirrored height & safe-area padding from bottom bar -->
+<header class="hidden max-[640px]:flex fixed top-0 inset-x-0 z-100 items-center justify-between bg-white border-b border-border pt-3.5 pb-3 px-4">
   <a
     href="/create"
     aria-label="Create"
-    class="flex items-center justify-center w-9 h-9 rounded-full text-[#6b5b6b] hover:bg-pink-50 transition-colors [&_svg]:w-5 [&_svg]:h-5"
+    class="flex items-center justify-center w-10 h-10 rounded-2xl text-[#6b5b6b] hover:bg-pink-50 transition-colors [&_svg]:w-6 [&_svg]:h-6"
   >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       {@html bottomItems[0].icon}
     </svg>
   </a>
 
-  <span class="font-serif text-lg font-medium text-[#5b3a5b] tracking-wide">Stargazerr</span>
+  <div class="flex items-center gap-2">
+    <img src={lilyLogo} alt="Logo" class="w-6 h-6" />
+    <span class="font-serif text-lg font-medium text-[#5b3a5b] tracking-wide">Stargazerr</span>
+  </div>
 
   <a
     href="/profile"
     aria-label="Profile"
-    class="flex items-center justify-center w-9 h-9 rounded-full text-[#6b5b6b] hover:bg-pink-50 transition-colors [&_svg]:w-5 [&_svg]:h-5"
+    class="flex items-center justify-center w-10 h-10 rounded-2xl text-[#6b5b6b] hover:bg-pink-50 transition-colors [&_svg]:w-6 [&_svg]:h-6"
   >
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       {@html bottomItems[1].icon}
@@ -52,7 +54,7 @@
   </a>
 </header>
 
-<!-- Mobile bottom bar: increased height (py-3 and pb-safe support) -->
+<!-- Mobile bottom bar -->
 <aside class="sticky top-0 h-screen py-8 flex flex-col max-[640px]:fixed max-[640px]:bottom-0 max-[640px]:inset-x-0 max-[640px]:top-auto max-[640px]:h-auto max-[640px]:bg-white max-[640px]:border-t max-[640px]:border-border max-[640px]:z-100 max-[640px]:pt-3 max-[640px]:pb-5 max-[640px]:px-3">
   <div class="flex flex-col h-full gap-1 max-[640px]:flex-row max-[640px]:items-center max-[640px]:w-full">
     <div class="flex items-center gap-2 px-3 pb-8 max-[640px]:hidden">

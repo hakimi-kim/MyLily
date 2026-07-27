@@ -34,6 +34,8 @@
 
   let visitorsOpen = $state(false);
   let visitors = $derived(data.visitors ?? []);
+  let menuOpen = $state(false);
+  let mobileVisitorsOpen = $state(false);
 
   function formatVisitTime(iso: string) {
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -53,7 +55,14 @@
 
   let positions = $derived.by(() => {
     const map = new Map<number, { x: number; y: number }>();
-    lilies.forEach((l: LilyDto) => map.set(l.id, nextAutoPosition(l.id)));
+    
+    // Sort lilies by ID ascending so slot positions remain deterministic and stable
+    const sorted = [...lilies].sort((a, b) => a.id - b.id);
+    
+    sorted.forEach((l: LilyDto, index: number) => {
+      map.set(l.id, nextAutoPosition(index));
+    });
+
     return map;
   });
 
@@ -170,11 +179,11 @@
       <span class="font-serif text-lg sm:text-xl font-medium text-ink tracking-wide">Stargazerr</span>
     </div>
 
-    <div class="flex items-center gap-3 sm:gap-4 md:gap-6 text-sm">
-
+    <div class="flex items-center gap-2 sm:gap-4 text-sm">
+      <!-- Wish visibility toggle button (always visible) -->
       <form method="POST" action="?/toggleWishVisibility" use:enhance>
         <input type="hidden" name="visible" value={!showWishText} />
-        <button type="submit" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-border bg-card/60 hover:bg-card text-xs text-sepia hover:text-ink transition-colors">
+        <button type="submit" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border border-border bg-card/60 hover:bg-card text-xs text-sepia hover:text-ink transition-colors cursor-pointer">
           {#if showWishText}
             <Eye class="w-3.5 h-3.5 text-sage shrink-0" /><span class="hidden sm:inline">Public Wishes</span>
           {:else}
@@ -183,68 +192,154 @@
         </button>
       </form>
 
-      <a href="/" aria-label="Home" class="text-sepia hover:text-ink transition-colors flex items-center">
-        <svg class="w-4.5 h-4.5 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 11.5L12 4l9 7.5" />
-          <path d="M5 10v9.5A1.5 1.5 0 0 0 6.5 21H9v-6h6v6h2.5a1.5 1.5 0 0 0 1.5-1.5V10" />
-        </svg>
-        <span class="hidden sm:inline">Home</span>
-      </a>
+      <!-- Desktop Navigation View (sm breakpoint and above) -->
+      <div class="hidden sm:flex items-center gap-4 md:gap-6">
+        <a href="/" aria-label="Home" class="text-sepia hover:text-ink transition-colors">
+          Home
+        </a>
 
-      <span aria-label="Journal" class="text-sepia/50 cursor-default flex items-center">
-        <svg class="w-4.5 h-4.5 md:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-        </svg>
-        <span class="hidden md:inline">Journal</span>
-      </span>
+        <span aria-label="Journal" class="text-sepia/50 cursor-default">
+          Journal
+        </span>
 
-      <div class="relative">
+        <!-- Desktop Visitors Dropdown -->
+        <div class="relative">
+          <button
+            onclick={() => (visitorsOpen = !visitorsOpen)}
+            class="text-sepia hover:text-ink transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+          >
+            <span>Who visits</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform {visitorsOpen ? 'rotate-180' : ''}">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {#if visitorsOpen}
+            <button
+              class="fixed inset-0 z-40 cursor-default"
+              onclick={() => (visitorsOpen = false)}
+              aria-label="Close"
+            ></button>
+
+            <div class="absolute right-0 top-full mt-2 w-64 bg-card rounded-xl ring-1 ring-border shadow-lg p-3 z-50">
+              {#if visitors.length === 0}
+                <p class="text-xs text-sepia/50 italic text-center py-4">No one has visited yet.</p>
+              {:else}
+                <ul class="space-y-2 max-h-64 overflow-y-auto">
+                  {#each visitors as v (v.visitor?.id)}
+                    <li class="flex items-center gap-3 text-sm">
+                      <div class="w-8 h-8 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
+                        <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-xs overflow-hidden">
+                          {#if v.visitor?.profilePictureUrl}
+                            <img src={v.visitor.profilePictureUrl} alt="" class="w-full h-full object-cover" />
+                          {:else}
+                            {(v.visitor?.displayName ?? v.visitor?.username ?? 'U').charAt(0).toUpperCase()}
+                          {/if}
+                        </div>
+                      </div>
+                      <span class="text-ink truncate flex-1">{v.visitor?.displayName ?? v.visitor?.username}</span>
+                      <span class="text-[10px] text-sepia/50 shrink-0">{formatVisitTime(v.visitedAt)}</span>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Mobile Menu / Dropdown Toggle (visible below sm) -->
+      <div class="relative sm:hidden">
         <button
-          onclick={() => (visitorsOpen = !visitorsOpen)}
-          class="text-sepia hover:text-ink transition-colors flex items-center gap-1 whitespace-nowrap"
+          onclick={() => (menuOpen = !menuOpen)}
+          aria-label="Toggle menu"
+          class="flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card/60 text-sepia hover:text-ink transition-colors"
         >
-          <svg class="w-4.5 h-4.5 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          <span class="hidden sm:inline">Who visits</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform {visitorsOpen ? 'rotate-180' : ''}">
-            <path d="M6 9l6 6 6-6" />
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            {#if menuOpen}
+              <path d="M18 6L6 18M6 6l12 12" />
+            {:else}
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            {/if}
           </svg>
         </button>
 
-        {#if visitorsOpen}
+        {#if menuOpen}
           <button
             class="fixed inset-0 z-40 cursor-default"
-            onclick={() => (visitorsOpen = false)}
-            aria-label="Close"
+            onclick={() => (menuOpen = false)}
+            aria-label="Close menu"
           ></button>
 
-          <div class="absolute right-0 top-full mt-2 w-56 sm:w-64 bg-card rounded-lg ring-1 ring-border shadow-lg p-3 z-50">
-            {#if visitors.length === 0}
-              <p class="text-xs text-sepia/50 italic text-center py-4">No one has visited yet.</p>
-            {:else}
-              <ul class="space-y-2 max-h-64 overflow-y-auto">
-                {#each visitors as v (v.visitor?.id)}
-                  <li class="flex items-center gap-3 text-sm">
-                    <div class="w-8 h-8 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
-                      <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-xs overflow-hidden">
-                        {#if v.visitor?.profilePictureUrl}
-                          <img src={v.visitor.profilePictureUrl} alt="" class="w-full h-full object-cover" />
-                        {:else}
-                          {(v.visitor?.displayName ?? v.visitor?.username ?? 'U').charAt(0).toUpperCase()}
-                        {/if}
+          <div class="absolute right-0 top-full mt-2 w-60 bg-card rounded-2xl border border-border shadow-xl p-2 z-50 space-y-1">
+            <!-- Home link -->
+            <a
+              href="/"
+              onclick={() => (menuOpen = false)}
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-sepia hover:text-ink hover:bg-leaf/20 transition-colors"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11.5L12 4l9 7.5" />
+                <path d="M5 10v9.5A1.5 1.5 0 0 0 6.5 21H9v-6h6v6h2.5a1.5 1.5 0 0 0 1.5-1.5V10" />
+              </svg>
+              <span>Home</span>
+            </a>
+
+            <!-- Journal link -->
+            <span class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-sepia/40 cursor-default">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              <span>Journal</span>
+            </span>
+
+            <div class="border-t border-border/60 my-1"></div>
+
+            <!-- Who visits expandable section -->
+            <div>
+              <button
+                onclick={() => (mobileVisitorsOpen = !mobileVisitorsOpen)}
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-sepia hover:text-ink hover:bg-leaf/20 transition-colors"
+              >
+                <div class="flex items-center gap-2.5">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <span>Who visits</span>
+                </div>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform {mobileVisitorsOpen ? 'rotate-180' : ''}">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {#if mobileVisitorsOpen}
+                <div class="mt-1 pl-2 pr-1 py-1 max-h-48 overflow-y-auto space-y-1.5 border-l-2 border-border/40 ml-4">
+                  {#if visitors.length === 0}
+                    <p class="text-[11px] text-sepia/50 italic py-2">No one has visited yet.</p>
+                  {:else}
+                    {#each visitors as v (v.visitor?.id)}
+                      <div class="flex items-center gap-2 text-xs py-0.5">
+                        <div class="w-6 h-6 rounded-full p-0.5 bg-linear-to-br from-pink-300 to-amber-300 shrink-0">
+                          <div class="w-full h-full rounded-full bg-pink-300 text-white flex items-center justify-center font-bold text-[10px] overflow-hidden">
+                            {#if v.visitor?.profilePictureUrl}
+                              <img src={v.visitor.profilePictureUrl} alt="" class="w-full h-full object-cover" />
+                            {:else}
+                              {(v.visitor?.displayName ?? v.visitor?.username ?? 'U').charAt(0).toUpperCase()}
+                            {/if}
+                          </div>
+                        </div>
+                        <span class="text-ink truncate flex-1 text-[11px]">{v.visitor?.displayName ?? v.visitor?.username}</span>
+                        <span class="text-[9px] text-sepia/50 shrink-0">{formatVisitTime(v.visitedAt)}</span>
                       </div>
-                    </div>
-                    <span class="text-ink truncate flex-1">{v.visitor?.displayName ?? v.visitor?.username}</span>
-                    <span class="text-[10px] text-sepia/50 shrink-0">{formatVisitTime(v.visitedAt)}</span>
-                  </li>
-                {/each}
-              </ul>
-            {/if}
+                    {/each}
+                  {/if}
+                </div>
+              {/if}
+            </div>
           </div>
         {/if}
       </div>

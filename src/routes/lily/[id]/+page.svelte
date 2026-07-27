@@ -161,17 +161,17 @@
         <p class="mt-4 pl-3 sm:pl-4 text-xs text-destructive font-sans">{form.error}</p>
       {/if}
 
-      <footer class="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4">
+      <footer class="mt-6 flex flex-row items-center justify-between gap-2.5 sm:gap-4 px-3 sm:px-4">
         <button 
           onclick={() => goto('/garden')} 
-          class="w-full sm:w-auto px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans text-center cursor-pointer"
+          class="flex-1 sm:flex-initial px-3 py-1.5 rounded-full border border-border text-sepia hover:bg-leaf/40 text-xs transition-colors font-sans text-center cursor-pointer whitespace-nowrap"
         >
           Return to the garden
         </button>
 
         <button 
           type="button" 
-          class="w-full sm:w-auto px-3 py-1.5 rounded-full border border-border text-muted-foreground text-xs font-semibold cursor-pointer hover:bg-red-50 hover:text-red-500 transition-colors" 
+          class="flex-1 sm:flex-initial px-3 py-1.5 rounded-full border border-red-200 bg-red-50/50 text-red-500 hover:bg-red-50 hover:border-red-300 text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap text-center" 
           onclick={() => showDeleteModal = true}
         >
           Delete this wish
@@ -191,7 +191,7 @@
     >
       <div class="w-full max-w-xs sm:max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg space-y-4">
         <div class="space-y-1 text-left">
-          <h3 id="delete-dialog-title" class="text-sm font-semibold text-ink font-serif">
+          <h3 id="delete-dialog-title" class="text-sm font-semibold text-ink">
             Delete this wish?
           </h3>
           <p class="text-xs text-sepia/70 leading-relaxed font-sans">
