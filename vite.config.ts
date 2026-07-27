@@ -12,8 +12,8 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			manifest: {
-				name: 'MyLily',
-				short_name: 'MyLily',
+				name: 'Stargazerr',
+				short_name: 'Stargazerr',
 				description: 'A quiet garden for your wishes and memories.',
 				theme_color: '#65a0a0',
 				background_color: '#fdf6ec',
