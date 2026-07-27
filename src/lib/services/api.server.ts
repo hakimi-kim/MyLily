@@ -264,6 +264,13 @@ export const lilyAPI = {
 			method: 'PUT',
 			headers: { Authorization: `Bearer ${token}` }
 		});
+	},
+
+	delete: async (token: string, lilyId: number) => {
+		return fetchAPI<null>(`/Lilies/${lilyId}`, {
+			method: 'DELETE',
+			headers: { Authorization: `Bearer ${token}` }
+		});
 	}
 };
 
