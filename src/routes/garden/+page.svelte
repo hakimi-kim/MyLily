@@ -59,14 +59,7 @@
 
   let positions = $derived.by(() => {
     const map = new Map<number, { x: number; y: number }>();
-    
-    // Sort lilies by ID ascending so slot positions remain deterministic and stable
-    const sorted = [...lilies].sort((a, b) => a.id - b.id);
-    
-    sorted.forEach((l: LilyDto, index: number) => {
-      map.set(l.id, nextAutoPosition(index));
-    });
-
+    lilies.forEach((l: LilyDto) => map.set(l.id, nextAutoPosition(l.slotIndex)));
     return map;
   });
 
@@ -383,6 +376,14 @@
   <!-- Filters + plant -->
   <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-[95vw]">
     <div class="flex items-center gap-1 bg-card/85 backdrop-blur-md ring-1 ring-border p-1.5 rounded-full shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] overflow-x-auto">
+      <button
+        onclick={() => (plantOpen = true)}
+        aria-label="Plant a wish"
+        class="shrink-0 size-9 rounded-full bg-dusty-rose/80 hover:bg-dusty-rose text-parchment flex items-center justify-center transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </button>
+      <div class="w-px h-5 bg-border mx-1 shrink-0"></div>
       {#each FILTERS as f}
         <button
           onclick={() => (filter = f)}
@@ -392,14 +393,6 @@
           {f}
         </button>
       {/each}
-      <div class="w-px h-5 bg-border mx-1 shrink-0"></div>
-      <button
-        onclick={() => (plantOpen = true)}
-        aria-label="Plant a wish"
-        class="shrink-0 size-9 rounded-full bg-dusty-rose/80 hover:bg-dusty-rose text-parchment flex items-center justify-center transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      </button>
     </div>
   </div>
 

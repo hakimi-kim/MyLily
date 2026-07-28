@@ -81,8 +81,11 @@
       style="transform: translate({pan.x}px, {pan.y}px) scale({zoom}); transform-origin: center center; transition: {drag.active ? 'none' : 'transform 300ms ease-out'};"
     >
       <GardenScenery />
+      <!-- {#each lilies as lily, i (lily.id)}
+        <PublicLilyNode {lily} position={nextAutoPosition(i)} />
+      {/each} -->
       {#each lilies as lily (lily.id)}
-        <PublicLilyNode {lily} position={nextAutoPosition(lily.id)} />
+        <PublicLilyNode {lily} position={nextAutoPosition(lily.slotIndex)} />
       {/each}
     </div>
   </div>

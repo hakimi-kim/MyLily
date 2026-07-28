@@ -146,7 +146,7 @@
         {#if !data.success}
           <div class="text-center p-8 text-muted-foreground"><p>{data.error ?? 'Failed to load feed.'}</p></div>
         {:else if posts.length === 0}
-          <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground italic">
+          <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground">
             <p class="m-0">No posts created yet.</p>
           </div>
         {:else}

@@ -113,6 +113,13 @@ export const userAPI = {
 		});
 	},
 
+	deleteAccount: async (token: string) => {
+		return fetchAPI<null>('/Users/me', { 
+			method: 'DELETE', 
+			headers: { Authorization: `Bearer ${token}` } 
+		});
+	},
+
 	updatePassword: async (token: string, currentPassword: string, newPassword: string) => {
 		return fetchAPI('/Users/me/password', {
 			method: 'PUT',

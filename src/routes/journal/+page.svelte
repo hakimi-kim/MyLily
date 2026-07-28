@@ -229,7 +229,7 @@
     {#if data.letters.length === 0}
       <div class="text-center py-12">
         <p class="text-3xl mb-1">🌱</p>
-        <p class="text-xs text-[oklch(0.5_0.05_30)] italic">Your garden is waiting.</p>
+        <p class="text-xs text-[oklch(0.5_0.05_30)]">Your garden is waiting.</p>
       </div>
     {:else}
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
