@@ -64,7 +64,6 @@
       </div>
     {/if}
 
-    <!-- 👈 Only render hover popup if showWishText is enabled -->
     {#if showWishText}
       <div class="pointer-events-none absolute top-full mt-3 w-48 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300">
         <div class="rounded-sm bg-card/95 backdrop-blur px-3 py-2 ring-1 ring-border shadow-sm text-center">

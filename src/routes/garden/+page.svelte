@@ -8,11 +8,15 @@
   import lilyLogo from '$lib/assets/lily.png'; 
   import { Eye, EyeOff } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+  import GardenInfoDialog from '$lib/components/GardenInfoDialog.svelte';
+  import { Info } from 'lucide-svelte';
 
 
   let { data } = $props<{ data: PageData }>();
 
   let showWishText = $derived(data.showWishText ?? true);
+
+  let infoOpen = $state(false);
 
   let lilies = $derived(data.lilies ?? []);
   let query = $state('');
@@ -180,6 +184,14 @@
     </div>
 
     <div class="flex items-center gap-2 sm:gap-4 text-sm">
+      <button
+        onclick={() => (infoOpen = true)}
+        aria-label="How the garden works"
+        class="flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card/60 hover:bg-card text-sepia hover:text-ink transition-colors cursor-pointer"
+      >
+        <Info class="w-3.5 h-3.5" />
+      </button>
+
       <!-- Wish visibility toggle button (always visible) -->
       <form method="POST" action="?/toggleWishVisibility" use:enhance>
         <input type="hidden" name="visible" value={!showWishText} />
@@ -396,4 +408,5 @@
   </p>
 
   <PlantWishDialog bind:open={plantOpen} onPlanted={() => invalidateAll()} />
+  <GardenInfoDialog bind:open={infoOpen} />
 </main>

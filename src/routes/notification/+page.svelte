@@ -35,7 +35,7 @@
         {#if !data.success}
           <div class="text-center p-8 text-muted-foreground"><p>{data.error ?? 'Failed to load notifications.'}</p></div>
         {:else if items.length === 0}
-          <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground italic">
+          <div class="flex justify-center items-center min-h-50 w-full text-muted-foreground">
             <p class="m-0">Nothing here yet.</p>
           </div>
         {:else}
@@ -64,9 +64,9 @@
               <div class="flex-1 min-w-0">
                 <div class="text-sm text-[#4a3050] leading-snug">
                   {#if item.type === 'LilyConfirmation'}
-                    Your wish <span class="italic">"{item.snippet}"</span> is ready — did it come true?
+                    Your wish <span class="text-muted-foreground">"{item.snippet}"</span> is ready — did it come true?
                   {:else if item.type === 'LilyBloomed'}
-                    Your wish <span class="italic">"{item.snippet}"</span> has bloomed!
+                    Your wish <span class="text-muted-foreground">"{item.snippet}"</span> has bloomed!
                   {:else if item.type === 'FriendRequestReceived'}
                     <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> wants to connect
 
@@ -85,11 +85,7 @@
                     {#if item.snippet}<span class="text-muted-foreground">— "{item.snippet}"</span>{/if}
                   {:else if item.type === 'Comment'}
                     <span class="font-semibold">{item.actor?.displayName ?? item.actor?.username}</span> commented:
-                    <span class="italic">"{item.snippet}"</span>
-                    <form method="POST" action="?/deleteComment" use:enhance class="inline">
-                      <input type="hidden" name="commentId" value={item.relatedCommentId} />
-                      <button type="submit" class="text-xs text-muted-foreground hover:text-red-500 ml-1">(delete comment)</button>
-                    </form>
+                    <span class="text-muted-foreground">"{item.snippet}"</span>
                   {/if}
                 </div>
                 <p class="text-xs text-muted-foreground mt-0.5">{formatTime(item.createdAt)}</p>

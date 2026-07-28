@@ -101,8 +101,8 @@
         <div class="space-y-1.5">
           <label for="wishType" class="text-[9px] uppercase tracking-widest text-sepia/70 font-sans">What kind of wish is this?</label>
           <select id="wishType" name="type" bind:value={type} class="w-full bg-card border border-border rounded-sm px-3 py-1.5 text-sm text-ink font-serif outline-none focus:ring-2 focus:ring-sage transition-all">
-            <option value={LilyType.GoalOriented}>A goal, with a date in mind</option>
-            <option value={LilyType.Reflective}>A feeling, memory, or promise</option>
+            <option value={LilyType.GoalOriented}>Goal wish</option>
+            <option value={LilyType.Reflective}>Memory wishes</option>
           </select>
         </div>
 
