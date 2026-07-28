@@ -155,6 +155,7 @@ export interface CreateLilyDto {
 
 export interface LilyDto {
 	id: number;
+	slotIndex: number;
 	wishText: string;
 	category: LilyCategory;
 	type: LilyType;

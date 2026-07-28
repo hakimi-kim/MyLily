@@ -125,7 +125,7 @@
           <!-- Default view: current mutual friends -->
           <p class="text-xs font-bold tracking-widest uppercase text-violet-400 px-1">Your mutual friends</p>
           {#if friends.length === 0}
-            <p class="text-center text-muted-foreground italic py-8">No mutual friends yet — search above to connect.</p>
+            <p class="text-center text-muted-foreground py-8">No mutual friends yet — search above to connect.</p>
           {:else}
             <ul class="list-none flex flex-col gap-1">
               {#each friends as friend (friend.id)}

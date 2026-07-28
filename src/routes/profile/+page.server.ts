@@ -124,5 +124,76 @@ export const actions: Actions = {
 				error: error instanceof Error ? error.message : 'Failed to update your display name.'
 			});
 		}
+	},
+
+	addComment: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const formData = await request.formData();
+		const postId = Number(formData.get('postId'));
+		const content = (formData.get('content') as string)?.trim();
+
+		if (!postId || !content) {
+			return fail(400, { commentError: 'Comment content cannot be empty.' });
+		}
+
+		try {
+			await postAPI.addComment(token, postId, content);
+			return { commentSuccess: true };
+		} catch (error) {
+			return fail(400, {
+				commentError: error instanceof Error ? error.message : 'Could not submit comment.'
+			});
+		}
+	},
+
+	deleteComment: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+
+		const formData = await request.formData();
+		const commentId = Number(formData.get('commentId'));
+
+		if (!commentId) return fail(400, { error: 'Invalid comment ID.' });
+
+		try {
+			await postAPI.deleteComment(token, commentId);
+			return { success: true };
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Could not delete comment.'
+			});
+		}
+	},
+
+	deletePost: async ({ request, cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+		const data = await request.formData();
+		const postId = Number(data.get('postId'));
+		try {
+			const success = await postAPI.delete(token, postId);
+			if (!success) return fail(404, { error: 'Post not found.' });
+			return { success: true };
+		} catch (error) {
+			return fail(403, {
+				error: error instanceof Error ? error.message : 'Could not delete this post.'
+			});
+		}
+	},
+
+	deleteAccount: async ({ cookies }) => {
+		const token = cookies.get('token');
+		if (!token) throw redirect(303, '/login');
+		try {
+			await userAPI.deleteAccount(token);
+		} catch (error) {
+			return fail(400, {
+				error: error instanceof Error ? error.message : 'Could not delete your account.'
+			});
+		}
+		cookies.delete('token', { path: '/' });
+		throw redirect(303, '/login');
 	}
 };
