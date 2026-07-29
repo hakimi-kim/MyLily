@@ -34,9 +34,11 @@
   let toast = $state<string | null>(null);
 
   let searchQuery = $state("");
-  let isDownloading = $state(false);
 
   let isConfirmingRemove = $state(false);
+
+  let previewImageUrl = $state<string | null>(null);
+  let isDownloading = $state(false);
 
   const petals = Array.from({ length: 10 }).map((_, i) => ({
     left: Math.random() * 100,
@@ -82,21 +84,132 @@
     } catch { return iso; }
   }
 
-  function drawFlowerCanvas(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, hue: number) {
-    ctx.save(); ctx.translate(cx, cy);
-    for (let i = 0; i < 6; i++) {
-      ctx.save(); ctx.rotate((i / 6) * Math.PI * 2);
-      const grad = ctx.createRadialGradient(0, -size * 0.4, size * 0.05, 0, -size * 0.4, size * 0.6);
-      grad.addColorStop(0, `oklch(0.92 0.08 ${hue})`);
-      grad.addColorStop(1, `oklch(0.75 0.16 ${hue})`);
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = `oklch(0.65 0.18 ${hue} / 0.4)`;
-      ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, 0);
-      ctx.bezierCurveTo(size * 0.32, -size * 0.2, size * 0.28, -size * 0.85, 0, -size);
-      ctx.bezierCurveTo(-size * 0.28, -size * 0.85, -size * 0.32, -size * 0.2, 0, 0);
-      ctx.fill(); ctx.stroke(); ctx.restore();
+  function drawFlowerCanvas(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    scale: number, 
+    hue: number
+  ) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    const s = scale / 35;
+
+    function drawPetalPath() {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(-10 * s, -8 * s, -14 * s, -22 * s, -6 * s, -34 * s);
+      ctx.bezierCurveTo(-2 * s, -38 * s, 2 * s, -38 * s, 6 * s, -34 * s);
+      ctx.bezierCurveTo(14 * s, -22 * s, 10 * s, -8 * s, 0, 0);
+      ctx.closePath();
     }
-    ctx.fillStyle = `oklch(0.78 0.16 60)`; ctx.beginPath(); ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+
+    [30, 150, 270].forEach((deg) => {
+      ctx.save();
+      ctx.rotate((deg * Math.PI) / 180);
+
+      const grad = ctx.createRadialGradient(0, -18 * s, 2 * s, 0, -18 * s, 22 * s);
+      grad.addColorStop(0, `oklch(0.95 0.05 ${hue})`);
+      grad.addColorStop(1, `oklch(0.80 0.16 ${hue})`);
+
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = `oklch(0.5 0.2 ${hue} / 0.35)`;
+      ctx.lineWidth = 1 * s;
+
+      drawPetalPath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    [90, 210, 330].forEach((deg) => {
+      ctx.save();
+      ctx.rotate((deg * Math.PI) / 180);
+
+      const grad = ctx.createRadialGradient(0, -18 * s, 2 * s, 0, -18 * s, 22 * s);
+      grad.addColorStop(0, `oklch(0.95 0.05 ${hue})`);
+      grad.addColorStop(1, `oklch(0.78 0.18 ${hue})`);
+
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = `oklch(0.5 0.2 ${hue} / 0.4)`;
+      ctx.lineWidth = 1.1 * s;
+
+      drawPetalPath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, -2 * s);
+      ctx.bezierCurveTo(-1 * s, -12 * s, -1 * s, -22 * s, 0, -32 * s);
+      ctx.strokeStyle = `oklch(0.5 0.22 ${hue} / 0.55)`;
+      ctx.lineWidth = 1.6 * s;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.fillStyle = `oklch(0.42 0.2 ${hue})`;
+      const speckles = [
+        { x: -1.5, y: -12, r: 1.2 },
+        { x: 1.2, y: -14, r: 1.0 },
+        { x: -1.0, y: -18, r: 1.1 },
+        { x: 1.0, y: -20, r: 0.9 },
+        { x: -2.0, y: -24, r: 0.8 },
+        { x: 1.5, y: -26, r: 0.7 }
+      ];
+
+      speckles.forEach((pt) => {
+        ctx.beginPath();
+        ctx.arc(pt.x * s, pt.y * s, pt.r * s, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    });
+
+    [0, 60, 120, 180, 240, 300].forEach((deg, i) => {
+      ctx.save();
+      ctx.rotate((deg * Math.PI) / 180);
+
+      const isOdd = i % 2 !== 0;
+      const sx = (isOdd ? 3.5 : -3.5) * s;
+      const ctrlX = (isOdd ? 2 : -2) * s;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(ctrlX, -6 * s, sx, -12 * s);
+      ctx.strokeStyle = "oklch(0.85 0.05 80)";
+      ctx.lineWidth = 1 * s;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(sx, -12.5 * s);
+      ctx.rotate(((isOdd ? 20 : -20) * Math.PI) / 180);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 1.8 * s, 3.2 * s, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "oklch(0.45 0.15 40)";
+      ctx.fill();
+      ctx.restore();
+
+      ctx.restore();
+    });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -15 * s);
+    ctx.strokeStyle = "oklch(0.75 0.08 100)";
+    ctx.lineWidth = 1.4 * s;
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, -15.5 * s, 2.2 * s, 0, Math.PI * 2);
+    ctx.fillStyle = "oklch(0.55 0.14 40)";
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
   }
 
   function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
@@ -110,39 +223,58 @@
     ctx.fillText(line.trim(), x, yy);
   }
 
+  function dataUrlToBlob(dataUrl: string): Blob {
+    const [header, base64] = dataUrl.split(",");
+    const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
   function downloadBloomCard(letter: Letter) {
     isDownloading = true;
 
-    setTimeout(() => {
-      try {
-        const canvas = document.createElement("canvas");
-        const W = 800; const H = 1000; canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext("2d"); if (!ctx) return;
+    try {
+      const canvas = document.createElement("canvas");
+      const W = 800; const H = 1000; canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-        ctx.fillStyle = "#fdf6ec"; ctx.fillRect(0, 0, W, H);
-        ctx.strokeStyle = "rgba(140,80,80,0.15)"; ctx.lineWidth = 3; ctx.strokeRect(25, 25, W - 50, H - 50);
+      ctx.fillStyle = "#fdf6ec"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(140,80,80,0.15)"; ctx.lineWidth = 3; ctx.strokeRect(25, 25, W - 50, H - 50);
 
-        drawFlowerCanvas(ctx, W / 2, 280, 140, hueFor(letter.id));
-        ctx.fillStyle = "#5a2b2b"; ctx.textAlign = "center";
+      drawFlowerCanvas(ctx, W / 2, 280, 140, hueFor(letter.id));
+      ctx.fillStyle = "#5a2b2b"; ctx.textAlign = "center";
 
-        ctx.font = "italic 22px Georgia, serif";
-        ctx.fillText(letter.isFromSelf ? "a memory from yourself" : `a letter from ${senderLabel(letter)}`, W / 2, 480);
-        ctx.font = "bold 42px Georgia, serif"; wrapText(ctx, letter.title, W / 2, 540, W - 140, 50);
-        ctx.font = "20px Georgia, serif"; ctx.fillStyle = "#7a4848"; ctx.fillText(formatDate(letter.date), W / 2, 620);
-        ctx.font = "22px Georgia, serif"; ctx.fillStyle = "#5a3838"; wrapText(ctx, letter.content || "—", W / 2, 680, W - 140, 32);
-        ctx.font = "italic 18px Georgia, serif"; ctx.fillStyle = "#9a5a6a"; ctx.fillText("planted in Our Memory Garden ♡", W / 2, H - 50);
+      ctx.font = "22px Georgia, serif";
+      ctx.fillText(letter.isFromSelf ? "a memory from yourself" : `a letter from ${senderLabel(letter)}`, W / 2, 480);
+      ctx.font = "bold 42px Georgia, serif"; wrapText(ctx, letter.title, W / 2, 540, W - 140, 50);
+      ctx.font = "20px Georgia, serif"; ctx.fillStyle = "#7a4848"; ctx.fillText(formatDate(letter.date), W / 2, 620);
+      ctx.font = "22px Georgia, serif"; ctx.fillStyle = "#5a3838"; wrapText(ctx, letter.content || "—", W / 2, 680, W - 140, 32);
+      ctx.font = "18px Georgia, serif"; ctx.fillStyle = "#9a5a6a"; ctx.fillText("planted in Memory Garden ♡", W / 2, H - 50);
 
-        const a = document.createElement("a"); 
-        a.href = canvas.toDataURL("image/png");
-        a.download = `bloom-${letter.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png`;
-        
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } finally {
-        isDownloading = false;
+      const safeTitle = letter.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      const filename = `bloom-${safeTitle || "memory"}.png`;
+
+      const dataUrl = canvas.toDataURL("image/png");
+      const blob = dataUrlToBlob(dataUrl);
+      const file = new File([blob], filename, { type: "image/png" });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        navigator.share({ files: [file], title: letter.title }).catch((err) => {
+          if (err.name !== "AbortError") openImageFallback(dataUrl);
+        });
+      } else {
+        openImageFallback(dataUrl);
       }
-    }, 50);
+    } finally {
+      isDownloading = false;
+    }
+  }
+
+  function openImageFallback(dataUrl: string) {
+    previewImageUrl = dataUrl;
   }
 
   function handleBackdropClick() {
@@ -235,13 +367,60 @@
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {#each data.letters as m (m.id)}
           <button onclick={() => (viewing = m)} class="group text-left rounded-xl p-3 bg-white/80 border border-black/5 shadow-sm hover:shadow-md transition-all cursor-pointer {justPlantedId === m.id ? 'animate-bloom' : ''}">
-            <svg viewBox="-50 -50 100 100" class="w-10 h-10 mx-auto" aria-hidden="true">
-              {#each Array.from({ length: 6 }) as _, i}
-                <g transform="rotate({(i / 6) * 360})">
-                  <path d="M 0 0 C 10 -6 8 -24 0 -30 C -8 -24 -10 -6 0 0 Z" fill="oklch(0.88 0.1 {hueFor(m.id)})" stroke="oklch(0.75 0.12 {hueFor(m.id)} / 0.5)" stroke-width="1" />
+            <svg viewBox="0 0 80 80" class="w-14 h-14 mx-auto mb-2" aria-hidden="true">
+              {#each [30, 150, 270] as deg}
+                <g transform="rotate({deg} 40 42)" opacity="0.92">
+                  <path
+                    d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+                    fill="oklch(0.85 0.12 {hueFor(m.id)})"
+                    stroke="oklch(0.7 0.16 {hueFor(m.id)} / 0.4)"
+                    stroke-width="0.5"
+                  />
                 </g>
               {/each}
-              <circle r="4" fill="oklch(0.78 0.16 60)" />
+
+              {#each [90, 210, 330] as deg}
+                <g transform="rotate({deg} 40 42)">
+                  <path
+                    d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+                    fill="oklch(0.88 0.14 {hueFor(m.id)})"
+                    stroke="oklch(0.7 0.16 {hueFor(m.id)} / 0.5)"
+                    stroke-width="0.55"
+                  />
+                  <path
+                    d="M40 40 C 39 30, 39 20, 40 10"
+                    stroke="oklch(0.5 0.22 {hueFor(m.id)} / 0.55)"
+                    stroke-width="0.8"
+                    fill="none"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="38.5" cy="30" r="0.6" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                  <circle cx="41.2" cy="28" r="0.5" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                  <circle cx="39" cy="24" r="0.55" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                  <circle cx="41" cy="22" r="0.45" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                </g>
+              {/each}
+
+              {#each [0, 60, 120, 180, 240, 300] as deg, i}
+                {@const sx = 40 + (i % 2 ? 3.5 : -3.5)}
+                <g transform="rotate({deg} 40 42)">
+                  <path
+                    d="M40 42 Q {40 + (i % 2 ? 2 : -2)} 36, {sx} 30"
+                    stroke="oklch(0.85 0.05 80)"
+                    stroke-width="0.5"
+                    fill="none"
+                    stroke-linecap="round"
+                  />
+                  <ellipse
+                    cx={sx} cy="29.5" rx="0.9" ry="1.6"
+                    fill="oklch(0.45 0.15 40)"
+                    transform="rotate({i % 2 ? 20 : -20} {sx} 29.5)"
+                  />
+                </g>
+              {/each}
+
+              <path d="M40 42 L 40 27" stroke="oklch(0.75 0.08 100)" stroke-width="0.7" stroke-linecap="round" />
+              <circle cx="40" cy="26.5" r="1.1" fill="oklch(0.55 0.14 40)" />
             </svg>
             <p class="mt-2 font-serif text-xs text-[oklch(0.35_0.06_25)] line-clamp-1 text-center">{m.title}</p>
             <p class="text-[10px] text-[oklch(0.55_0.05_30)] text-center">{formatDate(m.date)}</p>
@@ -380,13 +559,58 @@
 
           {:else if viewing}
             {@const m = viewing}
-            <svg viewBox="-50 -50 100 100" class="w-14 h-14 mx-auto mb-2" aria-hidden="true">
-              {#each Array.from({ length: 6 }) as _, i}
-                <g transform="rotate({(i / 6) * 360})">
-                  <path d="M 0 0 C 10 -6 8 -24 0 -30 C -8 -24 -10 -6 0 0 Z" fill="oklch(0.85 0.12 {hueFor(m.id)})" stroke="oklch(0.7 0.16 {hueFor(m.id)} / 0.4)" stroke-width="1" />
+            <svg viewBox="0 0 80 80" class="w-10 h-10 mx-auto" aria-hidden="true">
+              {#each [30, 150, 270] as deg}
+                <g transform="rotate({deg} 40 42)" opacity="0.92">
+                  <path
+                    d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+                    fill="oklch(0.88 0.1 {hueFor(m.id)})"
+                    stroke="oklch(0.75 0.12 {hueFor(m.id)} / 0.4)"
+                    stroke-width="0.5"
+                  />
                 </g>
               {/each}
-              <circle r="4" fill="oklch(0.78 0.16 60)" />
+
+              {#each [90, 210, 330] as deg}
+                <g transform="rotate({deg} 40 42)">
+                  <path
+                    d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+                    fill="oklch(0.9 0.12 {hueFor(m.id)})"
+                    stroke="oklch(0.75 0.12 {hueFor(m.id)} / 0.5)"
+                    stroke-width="0.55"
+                  />
+                  <path
+                    d="M40 40 C 39 30, 39 20, 40 10"
+                    stroke="oklch(0.5 0.22 {hueFor(m.id)} / 0.55)"
+                    stroke-width="0.8"
+                    fill="none"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="38.5" cy="30" r="0.6" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                  <circle cx="41.2" cy="28" r="0.5" fill="oklch(0.42 0.2 {hueFor(m.id)})" />
+                </g>
+              {/each}
+
+              {#each [0, 60, 120, 180, 240, 300] as deg, i}
+                {@const sx = 40 + (i % 2 ? 3.5 : -3.5)}
+                <g transform="rotate({deg} 40 42)">
+                  <path
+                    d="M40 42 Q {40 + (i % 2 ? 2 : -2)} 36, {sx} 30"
+                    stroke="oklch(0.85 0.05 80)"
+                    stroke-width="0.5"
+                    fill="none"
+                    stroke-linecap="round"
+                  />
+                  <ellipse
+                    cx={sx} cy="29.5" rx="0.9" ry="1.6"
+                    fill="oklch(0.45 0.15 40)"
+                    transform="rotate({i % 2 ? 20 : -20} {sx} 29.5)"
+                  />
+                </g>
+              {/each}
+
+              <path d="M40 42 L 40 27" stroke="oklch(0.75 0.08 100)" stroke-width="0.7" stroke-linecap="round" />
+              <circle cx="40" cy="26.5" r="1.1" fill="oklch(0.55 0.14 40)" />
             </svg>
             <p class="text-[10px] text-center text-sepia/70">{formatDate(m.date)} · {m.isFromSelf ? "diary" : `from ${senderLabel(m)}`}</p>
             <h2 class="font-serif text-xl text-center text-ink mt-0.5 mb-2">{m.title}</h2>
@@ -456,5 +680,26 @@
             </div>
           {/if}
     </div>
+  </div>
+{/if}
+
+{#if previewImageUrl}
+  <div class="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <p class="text-white text-sm mb-3 font-medium text-center">
+      Touch & hold the image to save it to Photos
+    </p>
+    
+    <img 
+      src={previewImageUrl} 
+      alt="Bloom Memory Card" 
+      class="max-h-[70vh] rounded-lg shadow-2xl object-contain"
+    />
+
+    <button 
+      onclick={() => (previewImageUrl = null)}
+      class="mt-5 px-6 py-2 bg-white/90 hover:bg-white text-neutral-800 font-semibold rounded-full shadow-lg transition-all"
+    >
+      Done
+    </button>
   </div>
 {/if}

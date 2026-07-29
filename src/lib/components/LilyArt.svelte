@@ -45,78 +45,78 @@
     {#if stage === LilyStage.AwaitingConfirmation}
       <circle cx="40" cy="48" r="14" fill="oklch(1 0 0 / 0.4)" class="animate-glow" />
     {/if}
-{:else if stage === LilyStage.Bloom}
-  {#if fulfilled}
-    <circle cx="40" cy="40" r="36" fill="oklch(0.95 0.05 10 / 0.5)" class="animate-glow" />
+  {:else if stage === LilyStage.Bloom}
+    {#if fulfilled}
+      <circle cx="40" cy="40" r="36" fill="oklch(0.95 0.05 10 / 0.5)" class="animate-glow" />
+    {/if}
+
+    <!-- Stem -->
+    <path d="M40 115 L 40 58" stroke="var(--color-moss)" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Leaves -->
+    <path d="M40 95 C 28 92, 22 84, 26 76 C 32 78, 38 86, 40 95 Z" fill="var(--color-sage)" />
+    <path d="M40 85 C 52 83, 58 77, 54 69 C 48 71, 42 78, 40 85 Z" fill="var(--color-sage)" opacity="0.9" />
+
+    <!-- Back trio of recurved petals -->
+    {#each [30, 150, 270] as deg}
+      <g transform="rotate({deg} 40 42)" opacity="0.92">
+        <path
+          d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+          fill="url(#{uid}-petal)"
+          stroke="oklch(0.5 0.2 8 / 0.35)"
+          stroke-width="0.5"
+        />
+      </g>
+    {/each}
+
+    <!-- Front trio -->
+    {#each [90, 210, 330] as deg}
+      <g transform="rotate({deg} 40 42)">
+        <path
+          d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
+          fill="url(#{uid}-petal)"
+          stroke="oklch(0.5 0.2 8 / 0.4)"
+          stroke-width="0.55"
+        />
+        <!-- Central pink stripe -->
+        <path
+          d="M40 40 C 39 30, 39 20, 40 10"
+          stroke="oklch(0.5 0.22 6 / 0.55)"
+          stroke-width="0.8"
+          fill="none"
+          stroke-linecap="round"
+        />
+        <!-- Crimson speckles -->
+        <circle cx="38.5" cy="30" r="0.6" fill="oklch(0.42 0.2 8)" />
+        <circle cx="41.2" cy="28" r="0.5" fill="oklch(0.42 0.2 8)" />
+        <circle cx="39" cy="24" r="0.55" fill="oklch(0.42 0.2 8)" />
+        <circle cx="41" cy="22" r="0.45" fill="oklch(0.42 0.2 8)" />
+        <circle cx="38" cy="18" r="0.4" fill="oklch(0.42 0.2 8)" />
+        <circle cx="41.5" cy="16" r="0.35" fill="oklch(0.42 0.2 8)" />
+      </g>
+    {/each}
+
+    <!-- Six stamens with rust anthers -->
+    {#each [0, 60, 120, 180, 240, 300] as deg, i}
+      {@const sx = 40 + (i % 2 ? 3.5 : -3.5)}
+      <g transform="rotate({deg} 40 42)">
+        <path
+          d="M40 42 Q {40 + (i % 2 ? 2 : -2)} 36, {sx} 30"
+          stroke="oklch(0.85 0.05 80)"
+          stroke-width="0.5"
+          fill="none"
+          stroke-linecap="round"
+        />
+        <ellipse
+          cx={sx} cy="29.5" rx="0.9" ry="1.6"
+          fill="oklch(0.45 0.15 40)"
+          transform="rotate({i % 2 ? 20 : -20} {sx} 29.5)"
+        />
+      </g>
+    {/each}
+
+    <!-- Pistil -->
+    <path d="M40 42 L 40 27" stroke="oklch(0.75 0.08 100)" stroke-width="0.7" stroke-linecap="round" />
+    <circle cx="40" cy="26.5" r="1.1" fill="oklch(0.55 0.14 40)" />
   {/if}
-
-  <!-- Stem -->
-  <path d="M40 115 L 40 58" stroke="var(--color-moss)" stroke-width="2" stroke-linecap="round" />
-
-  <!-- Leaves -->
-  <path d="M40 95 C 28 92, 22 84, 26 76 C 32 78, 38 86, 40 95 Z" fill="var(--color-sage)" />
-  <path d="M40 85 C 52 83, 58 77, 54 69 C 48 71, 42 78, 40 85 Z" fill="var(--color-sage)" opacity="0.9" />
-
-  <!-- Back trio of recurved petals -->
-  {#each [30, 150, 270] as deg}
-    <g transform="rotate({deg} 40 42)" opacity="0.92">
-      <path
-        d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
-        fill="url(#{uid}-petal)"
-        stroke="oklch(0.5 0.2 8 / 0.35)"
-        stroke-width="0.5"
-      />
-    </g>
-  {/each}
-
-  <!-- Front trio -->
-  {#each [90, 210, 330] as deg}
-    <g transform="rotate({deg} 40 42)">
-      <path
-        d="M40 42 C 30 34, 26 20, 34 8 C 38 4, 42 4, 46 8 C 54 20, 50 34, 40 42 Z"
-        fill="url(#{uid}-petal)"
-        stroke="oklch(0.5 0.2 8 / 0.4)"
-        stroke-width="0.55"
-      />
-      <!-- Central pink stripe -->
-      <path
-        d="M40 40 C 39 30, 39 20, 40 10"
-        stroke="oklch(0.5 0.22 6 / 0.55)"
-        stroke-width="0.8"
-        fill="none"
-        stroke-linecap="round"
-      />
-      <!-- Crimson speckles -->
-      <circle cx="38.5" cy="30" r="0.6" fill="oklch(0.42 0.2 8)" />
-      <circle cx="41.2" cy="28" r="0.5" fill="oklch(0.42 0.2 8)" />
-      <circle cx="39" cy="24" r="0.55" fill="oklch(0.42 0.2 8)" />
-      <circle cx="41" cy="22" r="0.45" fill="oklch(0.42 0.2 8)" />
-      <circle cx="38" cy="18" r="0.4" fill="oklch(0.42 0.2 8)" />
-      <circle cx="41.5" cy="16" r="0.35" fill="oklch(0.42 0.2 8)" />
-    </g>
-  {/each}
-
-  <!-- Six stamens with rust anthers -->
-  {#each [0, 60, 120, 180, 240, 300] as deg, i}
-    {@const sx = 40 + (i % 2 ? 3.5 : -3.5)}
-    <g transform="rotate({deg} 40 42)">
-      <path
-        d="M40 42 Q {40 + (i % 2 ? 2 : -2)} 36, {sx} 30"
-        stroke="oklch(0.85 0.05 80)"
-        stroke-width="0.5"
-        fill="none"
-        stroke-linecap="round"
-      />
-      <ellipse
-        cx={sx} cy="29.5" rx="0.9" ry="1.6"
-        fill="oklch(0.45 0.15 40)"
-        transform="rotate({i % 2 ? 20 : -20} {sx} 29.5)"
-      />
-    </g>
-  {/each}
-
-  <!-- Pistil -->
-  <path d="M40 42 L 40 27" stroke="oklch(0.75 0.08 100)" stroke-width="0.7" stroke-linecap="round" />
-  <circle cx="40" cy="26.5" r="1.1" fill="oklch(0.55 0.14 40)" />
-{/if}
 </svg>
