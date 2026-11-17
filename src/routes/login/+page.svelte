@@ -8,7 +8,7 @@
 	import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
-  let formError = $derived(form?.errors?.form || (form ? '' : data.blockedMessage));
+  let blockedMessage = $derived(form?.blockedMessage || data.blockedMessage);
 
   let showPassword = $state(false);
   let isSubmitting = $state(false);
@@ -18,6 +18,13 @@
   }
 </script>
 
+{#if blockedMessage}
+<div class="flex min-h-screen w-full items-center justify-center bg-white px-6">
+  <p class="max-w-5xl text-center font-serif text-4xl font-medium leading-tight text-[#4a3050] sm:text-6xl">
+    {blockedMessage}
+  </p>
+</div>
+{:else}
 <div class="min-h-screen w-full bg-cover bg-center bg-fixed bg-no-repeat">
   <div class="flex min-h-screen w-full items-center justify-center px-4 bg-[#fdf6f9]/60 backdrop-blur-sm">
     <Card.Root class="mx-auto w-full max-w-sm shadow-xl bg-white/95">
@@ -40,9 +47,9 @@
         >
           <FieldGroup>
 
-            {#if formError}
+            {#if form?.errors?.form}
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {formError}
+                {form.errors.form}
               </div>
             {/if}
 
@@ -99,4 +106,4 @@
       </Card.Content>
     </Card.Root>
   </div>
-</div>
+</div>{/if}

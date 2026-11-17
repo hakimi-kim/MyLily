@@ -24,10 +24,7 @@ export const actions: Actions = {
 		}
 
 		if (isBlockedUsername(username)) {
-			return fail(403, {
-				username,
-				errors: { username: '', password: '', form: BLOCKED_MESSAGE }
-			});
+			return fail(403, { blockedMessage: BLOCKED_MESSAGE });
 		}
 
 		if (!password) {
