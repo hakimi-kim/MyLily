@@ -2,11 +2,12 @@ import { authAPI } from '$lib/services/api.server';
 import { redirect, fail, isRedirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { dev } from '$app/environment';
+import { BLOCKED_MESSAGE, isBlockedUsername } from '$lib/blocked';
 
-export const load: PageServerLoad = async ({ cookies }) => {
+export const load: PageServerLoad = async ({ cookies, url }) => {
 	const token = cookies.get('token');
 	if (token) throw redirect(303, '/');
-	return {};
+	return { blockedMessage: url.searchParams.has('blocked') ? BLOCKED_MESSAGE : '' };
 };
 
 export const actions: Actions = {
@@ -19,6 +20,13 @@ export const actions: Actions = {
 			return fail(400, {
 				username,
 				errors: { username: 'Username is required.', password: '', form: '' }
+			});
+		}
+
+		if (isBlockedUsername(username)) {
+			return fail(403, {
+				username,
+				errors: { username: '', password: '', form: BLOCKED_MESSAGE }
 			});
 		}
 

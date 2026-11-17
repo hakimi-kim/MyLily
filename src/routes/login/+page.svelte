@@ -5,9 +5,10 @@
   import { FieldGroup, Field, FieldLabel } from '$lib/components/ui/field/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Button } from "$lib/components/ui/button/index.js";
-	import type { ActionData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-  let { form }: { form: ActionData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
+  let formError = $derived(form?.errors?.form || (form ? '' : data.blockedMessage));
 
   let showPassword = $state(false);
   let isSubmitting = $state(false);
@@ -39,9 +40,9 @@
         >
           <FieldGroup>
 
-            {#if form?.errors?.form}
+            {#if formError}
               <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                {form.errors.form}
+                {formError}
               </div>
             {/if}
 
@@ -92,13 +93,6 @@
                 {isSubmitting ? 'Logging in...' : 'Login'}
               </Button>
             </Field>
-
-            <div class="mt-4 text-center text-sm text-[#4a3050]">
-              Don't have an account?
-              <a href="/register" class="font-semibold text-[#d4af37] hover:underline">
-                Register here
-              </a>
-            </div>
 
           </FieldGroup>
         </form>

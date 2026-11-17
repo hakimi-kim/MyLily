@@ -1,7 +1,7 @@
 import { page } from '$app/stores';
 import { derived } from 'svelte/store';
 
-const ROUTES_WITHOUT_NAVBAR = ['/login', '/register', '/garden'];
+const ROUTES_WITHOUT_NAVBAR = ['/login', '/garden'];
 
 export const showNavbar = derived(page, ($page) => {
 	return !ROUTES_WITHOUT_NAVBAR.some((route) => $page.url.pathname.startsWith(route));
